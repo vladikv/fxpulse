@@ -58,8 +58,12 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 ## NBP API facts (important)
 - Base: `https://api.nbp.pl/api` — always add `?format=json`. No API key.
 - Table A (mid rates): `/exchangerates/tables/A/` and `/exchangerates/rates/A/{code}/{startDate}/{endDate}/`
-- A single date-range query is limited to 93 days -> split longer ranges into chunks.
+- Range limit: NBP documents 93 days per date-range query; the server actually enforces **367 days**
+  (verified 2026-11-06: longer ranges return `400 ... Limit of 367 days has been exceeded`).
+  We split longer ranges into chunks of `app.nbp.max-days-per-request` (default 93, the documented limit).
 - No rates on weekends/holidays; the API returns **404** when there is no data for a range — treat as "empty", not as an error.
+  The 404 body is **plain text** (`404 NotFound - Not Found - Brak danych`), not JSON; an unknown currency code also returns this 404.
+- `tables/A/` returns a JSON **array** with one table; currency names are in Polish (32 currencies as of 2026-11).
 - Ingestion must be **idempotent**: unique constraint on (currency_code, effective_date), upsert/skip duplicates.
 
 ## Gemini facts

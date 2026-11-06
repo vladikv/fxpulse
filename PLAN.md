@@ -27,12 +27,12 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** Flyway applies migration on startup; repository integration test with Testcontainers passes.
 
 ## Phase 2 — NBP ingestion (ETL)
-- [ ] `NbpClient` (RestClient): fetch table A (current), fetch rates for a currency in a date range
-- [ ] Split ranges > 93 days into chunks; treat 404 as empty result
-- [ ] `IngestionService`: load currency list, backfill last N days (configurable, e.g. 365), idempotent save
-- [ ] `IngestionScheduler`: `@Scheduled` daily run on workdays (cron in config)
-- [ ] `POST /api/admin/ingest?days=365` to trigger manually
-- [ ] Tests: WireMock stubs for NBP (normal, 404, chunking), unit test for idempotency
+- [x] `NbpClient` (RestClient): fetch table A (current), fetch rates for a currency in a date range
+- [x] Split ranges into chunks (configurable, default 93 days = documented limit; server enforces 367); treat 404 as empty result
+- [x] `IngestionService`: load currency list, backfill last N days (configurable, e.g. 365), idempotent save
+- [x] `IngestionScheduler`: `@Scheduled` daily run on workdays (cron in config)
+- [x] `POST /api/admin/ingest?days=365` to trigger manually
+- [x] Tests: WireMock stubs for NBP (normal, 404, chunking), unit test for idempotency, end-to-end ingestion test (WireMock + Testcontainers)
 - **Done when:** after triggering ingestion the DB contains ~a year of rates for all table A currencies, re-running adds no duplicates.
 
 ## Phase 3 — REST API
@@ -86,7 +86,7 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 ---
 
 ## Interview talking points to be able to explain
-- Why `BigDecimal`; why idempotent ingestion; why 93-day chunking
+- Why `BigDecimal`; why idempotent ingestion; why chunking (documented 93 days vs. enforced 367, configurable)
 - Why Flyway instead of `ddl-auto`
 - Why the AI client is behind an interface; how caching saves free-tier quota
 - Why Testcontainers over H2; how WireMock isolates external APIs

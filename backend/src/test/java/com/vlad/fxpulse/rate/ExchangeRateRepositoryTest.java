@@ -15,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,12 +90,17 @@ class ExchangeRateRepositoryTest {
     }
 
     @Test
-    void existsChecksCurrencyAndDate() {
-        exchangeRateRepository.saveAndFlush(rate(eur, "2026-01-05", "4.2500"));
+    void findsStoredDatesOnlyForGivenCurrencyAndRange() {
+        exchangeRateRepository.save(rate(eur, "2026-01-05", "4.2500"));
+        exchangeRateRepository.save(rate(eur, "2026-01-06", "4.2550"));
+        exchangeRateRepository.save(rate(eur, "2026-01-09", "4.2700")); // outside range
+        exchangeRateRepository.save(rate(usd, "2026-01-07", "3.9000")); // other currency
+        exchangeRateRepository.flush();
 
-        assertThat(exchangeRateRepository.existsByCurrencyCodeAndEffectiveDate("EUR", LocalDate.parse("2026-01-05"))).isTrue();
-        assertThat(exchangeRateRepository.existsByCurrencyCodeAndEffectiveDate("EUR", LocalDate.parse("2026-01-06"))).isFalse();
-        assertThat(exchangeRateRepository.existsByCurrencyCodeAndEffectiveDate("USD", LocalDate.parse("2026-01-05"))).isFalse();
+        Set<LocalDate> dates = exchangeRateRepository.findEffectiveDates(
+                "EUR", LocalDate.parse("2026-01-05"), LocalDate.parse("2026-01-08"));
+
+        assertThat(dates).containsExactlyInAnyOrder(LocalDate.parse("2026-01-05"), LocalDate.parse("2026-01-06"));
     }
 
     private static ExchangeRate rate(Currency currency, String date, String mid) {
