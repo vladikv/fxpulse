@@ -77,7 +77,9 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 
 ## Git
 - Commit after each finished, working step with a clear message (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`).
-- Work on `main` for normal steps. Create a branch only for big/global changes.
+- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/phase-2-ingestion`, `fix/...`, `docs/...`).
+  Never commit feature work directly to `main`.
+- Push the branch and open a pull request into `main` (via `gh pr create`); merge only after tests pass and I approve.
 - Never commit `.env`, keys, `target/`, `node_modules/`.
 
 ## How to work with me (Claude)
