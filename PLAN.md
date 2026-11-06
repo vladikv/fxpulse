@@ -17,12 +17,13 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** `docker compose up -d db` + `.\mvnw spring-boot:run` works, first commit pushed.
 
 ## Phase 1 — Data model
-- [ ] `V1__init.sql`:
+- [x] `V1__init.sql`:
   - `currency(code CHAR(3) PK, name VARCHAR, created_at)`
   - `exchange_rate(id BIGSERIAL PK, currency_code FK, effective_date DATE, mid NUMERIC(12,4), table_no VARCHAR, UNIQUE(currency_code, effective_date))`
   - `ai_insight(id BIGSERIAL PK, currency_code FK, period_from DATE, period_to DATE, content TEXT, model VARCHAR, created_at, UNIQUE(currency_code, period_from, period_to))`
-  - index on `exchange_rate(currency_code, effective_date)`
-- [ ] JPA entities + repositories
+  - index on `exchange_rate(currency_code, effective_date)` — provided by the UNIQUE constraint's B-tree index (no separate `CREATE INDEX`, it would be a duplicate)
+- [x] JPA entities + repositories
+- [x] Repository integration tests with Testcontainers PostgreSQL
 - **Done when:** Flyway applies migration on startup; repository integration test with Testcontainers passes.
 
 ## Phase 2 — NBP ingestion (ETL)
