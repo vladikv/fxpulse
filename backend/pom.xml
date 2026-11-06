@@ -88,6 +88,14 @@
 			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- WireMock: stubs NBP/Gemini HTTP APIs in tests. Standalone jar shades its own Jetty (no classpath clashes).
+		     Not managed by Spring Boot, so the version is pinned here (latest stable; 4.x is still beta). -->
+		<dependency>
+			<groupId>org.wiremock</groupId>
+			<artifactId>wiremock-standalone</artifactId>
+			<version>3.13.2</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

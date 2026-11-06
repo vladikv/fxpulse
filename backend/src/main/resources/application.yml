@@ -16,6 +16,19 @@ spring:
   flyway:
     enabled: true
 
+app:
+  nbp:
+    base-url: https://api.nbp.pl/api
+    # NBP documents a 93-day limit per range query (the server currently enforces 367); longer ranges are split.
+    max-days-per-request: 93
+    connect-timeout: 5s
+    read-timeout: 20s
+  ingestion:
+    backfill-days: 365            # default for POST /api/admin/ingest
+    scheduled-days: 7             # the daily job re-checks the last week (catches up after holidays/outages)
+    cron: "0 30 12 * * MON-FRI"   # NBP publishes table A around 11:45-12:15 Warsaw time on business days
+    scheduler-enabled: ${INGESTION_SCHEDULER_ENABLED:true}
+
 management:
   endpoints:
     web:
