@@ -1,0 +1,92 @@
+# PLAN.md — FxPulse
+
+Goal: a deployed full-stack app (Java + SQL + React + AI + cloud) that matches Xelerit's internship profile,
+plus a practiced, explainable AI-assisted workflow with Claude Code.
+
+Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are polish.
+
+---
+
+## Phase 0 — Setup
+- [ ] Repo structure: `/backend`, `/frontend`, `/docs`, `.gitignore`, `README.md` skeleton
+- [ ] Spring Boot project in `/backend` (Java 21, Maven wrapper, Web, Data JPA, Validation, Actuator, Flyway, PostgreSQL driver)
+- [ ] `docker-compose.yml` with `db` service (postgres:16, volume, healthcheck)
+- [ ] `application.yml` reading DB URL/user/password from env with local defaults
+- [ ] `.env.example` (DB vars, `GEMINI_API_KEY=`)
+- [ ] App starts and `/actuator/health` returns UP
+- **Done when:** `docker compose up -d db` + `.\mvnw spring-boot:run` works, first commit pushed.
+
+## Phase 1 — Data model
+- [ ] `V1__init.sql`:
+  - `currency(code CHAR(3) PK, name VARCHAR, created_at)`
+  - `exchange_rate(id BIGSERIAL PK, currency_code FK, effective_date DATE, mid NUMERIC(12,4), table_no VARCHAR, UNIQUE(currency_code, effective_date))`
+  - `ai_insight(id BIGSERIAL PK, currency_code FK, period_from DATE, period_to DATE, content TEXT, model VARCHAR, created_at, UNIQUE(currency_code, period_from, period_to))`
+  - index on `exchange_rate(currency_code, effective_date)`
+- [ ] JPA entities + repositories
+- **Done when:** Flyway applies migration on startup; repository integration test with Testcontainers passes.
+
+## Phase 2 — NBP ingestion (ETL)
+- [ ] `NbpClient` (RestClient): fetch table A (current), fetch rates for a currency in a date range
+- [ ] Split ranges > 93 days into chunks; treat 404 as empty result
+- [ ] `IngestionService`: load currency list, backfill last N days (configurable, e.g. 365), idempotent save
+- [ ] `IngestionScheduler`: `@Scheduled` daily run on workdays (cron in config)
+- [ ] `POST /api/admin/ingest?days=365` to trigger manually
+- [ ] Tests: WireMock stubs for NBP (normal, 404, chunking), unit test for idempotency
+- **Done when:** after triggering ingestion the DB contains ~a year of rates for all table A currencies, re-running adds no duplicates.
+
+## Phase 3 — REST API
+- [ ] `GET /api/currencies` — list
+- [ ] `GET /api/rates/{code}?from=&to=` — time series (validate dates, from <= to, max range)
+- [ ] `GET /api/rates/{code}/stats?from=&to=` — min, max, avg, first, last, change %, volatility (std dev)
+- [ ] `GET /api/convert?from=EUR&to=USD&amount=100&date=` — cross-rate via PLN, latest available date if none
+- [ ] `GlobalExceptionHandler` + `ApiError` (404 unknown currency, 400 validation)
+- [ ] OpenAPI docs (springdoc) — ask before adding the dependency
+- [ ] Tests: `StatsCalculator` unit tests (edge cases: 1 point, empty), `@WebMvcTest` for controllers
+- **Done when:** all endpoints work in Postman/HTTP client and are covered by tests.
+
+## Phase 4 — AI insights
+- [ ] `AiInsightClient` interface + `GeminiClient` implementation (RestClient, key from env)
+- [ ] `InsightService`: compute stats -> build compact prompt -> call AI -> save to `ai_insight`
+- [ ] Cache: return saved insight if (currency, period) already exists
+- [ ] Handle 429 / timeouts / missing key with a clear error response (no crash)
+- [ ] `GET /api/insights/{code}?from=&to=`
+- [ ] Prompt template in resources (`prompts/trend-summary.txt`), output: short plain-English summary, no financial advice
+- [ ] Tests: WireMock Gemini stub (success, 429), cache hit test
+- **Done when:** first call generates and stores an insight, second call returns it from DB instantly.
+
+## Phase 5 — Frontend
+- [ ] Vite + React + TypeScript in `/frontend`, API base URL from env
+- [ ] Dashboard: currency selector, date range picker, line chart (Recharts), stats cards
+- [ ] Converter widget
+- [ ] "Generate AI insight" panel with loading/error states
+- [ ] CORS config on backend (allowed origins from config)
+- **Done when:** whole flow works in the browser locally.
+
+## Phase 6 — Docker & CI
+- [ ] Multi-stage `Dockerfile` for backend, Dockerfile (or static build) for frontend
+- [ ] `docker compose up --build` runs db + backend + frontend
+- [ ] GitHub Actions: build + test backend (Testcontainers works on ubuntu runners), build frontend
+- **Done when:** green CI badge in README.
+
+## Phase 7 — Cloud deploy (free)
+- [ ] Neon PostgreSQL (free, no expiry) — connection via env vars
+- [ ] Render: backend as Docker web service, frontend as static site
+- [ ] Env vars set in Render dashboard (DB, `GEMINI_API_KEY`, CORS origin)
+- [ ] Note in README: free instance sleeps after 15 min, first request takes ~1 min
+- **Done when:** public URL works end to end.
+
+## Phase 8 — Polish & interview prep
+- [ ] README: what/why, architecture diagram, screenshots, how to run, endpoints, decisions & trade-offs
+- [ ] `docs/ai-workflow.md`: how Claude Code was used (CLAUDE.md, plan mode, subagents, what I reviewed/changed myself)
+- [ ] Optional: `.claude/agents/code-reviewer.md` subagent, run it over the codebase, fix findings
+- [ ] Ask Claude: "Ask me 15 interview questions about this codebase" — answer them out loud
+- [ ] Timed rehearsal: rebuild a mini version (one endpoint + one test) from scratch in 2 hours
+
+---
+
+## Interview talking points to be able to explain
+- Why `BigDecimal`; why idempotent ingestion; why 93-day chunking
+- Why Flyway instead of `ddl-auto`
+- Why the AI client is behind an interface; how caching saves free-tier quota
+- Why Testcontainers over H2; how WireMock isolates external APIs
+- What I would change for production (auth, retries with backoff, observability, paid tier)

@@ -1,0 +1,26 @@
+server:
+  port: ${PORT:8098}
+
+spring:
+  application:
+    name: fxpulse
+  datasource:
+    # Values come from env vars; defaults match docker-compose.yml for local development.
+    url: ${DB_URL:jdbc:postgresql://localhost:25432/fxpulse}
+    username: ${DB_USERNAME:fxpulse}
+    password: ${DB_PASSWORD:fxpulse}
+  jpa:
+    hibernate:
+      ddl-auto: validate   # schema is owned by Flyway; Hibernate only checks it matches the entities
+    open-in-view: false
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
