@@ -84,6 +84,7 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/phase-2-ingestion`, `fix/...`, `docs/...`).
   Never commit feature work directly to `main`.
 - Push the branch and open a pull request into `main` (via `gh pr create`); merge only after tests pass and I approve.
+- Keep branches after merging: never delete them, locally or on GitHub (no `--delete-branch`).
 - Never commit `.env`, keys, `target/`, `node_modules/`.
 
 ## How to work with me (Claude)
