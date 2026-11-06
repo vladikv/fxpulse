@@ -8,12 +8,12 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 ---
 
 ## Phase 0 — Setup
-- [ ] Repo structure: `/backend`, `/frontend`, `/docs`, `.gitignore`, `README.md` skeleton
-- [ ] Spring Boot project in `/backend` (Java 21, Maven wrapper, Web, Data JPA, Validation, Actuator, Flyway, PostgreSQL driver)
-- [ ] `docker-compose.yml` with `db` service (postgres:16, volume, healthcheck)
-- [ ] `application.yml` reading DB URL/user/password from env with local defaults
-- [ ] `.env.example` (DB vars, `GEMINI_API_KEY=`)
-- [ ] App starts and `/actuator/health` returns UP
+- [x] Repo structure: `/backend`, `/frontend`, `/docs`, `.gitignore`, `README.md` skeleton
+- [x] Spring Boot project in `/backend` (Java 21, Maven wrapper, Web, Data JPA, Validation, Actuator, Flyway, PostgreSQL driver)
+- [x] `docker-compose.yml` with `db` service (postgres:16, volume, healthcheck)
+- [x] `application.yml` reading DB URL/user/password from env with local defaults
+- [x] `.env.example` (DB vars, `GEMINI_API_KEY=`)
+- [x] App starts and `/actuator/health` returns UP
 - **Done when:** `docker compose up -d db` + `.\mvnw spring-boot:run` works, first commit pushed.
 
 ## Phase 1 — Data model
