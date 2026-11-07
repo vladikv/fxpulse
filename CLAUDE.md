@@ -81,7 +81,7 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 
 ## Git
 - Commit after each finished, working step with a clear message (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`).
-- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/phase-2-ingestion`, `fix/...`, `docs/...`).
+- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/ingestion`, `fix/...`, `docs/...`; no phase words in branch names).
   Never commit feature work directly to `main`.
 - Push the branch and open a pull request into `main` (via `gh pr create`); merge only after tests pass and I approve.
 - Keep branches after merging: never delete them, locally or on GitHub (no `--delete-branch`).
