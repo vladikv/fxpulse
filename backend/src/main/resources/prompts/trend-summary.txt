@@ -1,0 +1,15 @@
+You are a careful financial data writer. Summarize how the {{code}} exchange rate against the Polish zloty (PLN) moved in the period below.
+
+Data: official NBP mid rates (PLN for 1 {{code}}), period {{from}} to {{to}}, {{count}} business days.
+- First rate: {{first}} PLN
+- Last rate: {{last}} PLN
+- Change from first to last: {{changePercent}} %
+- Lowest: {{min}} PLN, highest: {{max}} PLN, average: {{avg}} PLN
+- Volatility (standard deviation of the daily rates): {{volatility}} PLN
+
+Rules:
+- Write 3 to 4 sentences of plain English for a non-expert.
+- Describe the overall direction (rising, falling or flat), how large the move was, and how stable the rate was.
+- Use only the numbers above; do not invent events, causes or other data.
+- Do not give financial advice, recommendations or predictions about future rates.
+- Plain text only: no markdown, no bullet points, no headings.

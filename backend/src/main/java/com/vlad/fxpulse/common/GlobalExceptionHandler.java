@@ -1,5 +1,7 @@
 package com.vlad.fxpulse.common;
 
+import com.vlad.fxpulse.insight.AiRateLimitedException;
+import com.vlad.fxpulse.insight.AiUnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    /** The AI provider's quota is used up; the client should simply retry later. */
+    @ExceptionHandler(AiRateLimitedException.class)
+    public ResponseEntity<ApiError> handleAiRateLimited(AiRateLimitedException ex, HttpServletRequest request) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
+    /** AI not configured, unreachable or no answer: our dependency is down, not the request wrong. */
+    @ExceptionHandler(AiUnavailableException.class)
+    public ResponseEntity<ApiError> handleAiUnavailable(AiUnavailableException ex, HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request);
     }
 
     /** A Jakarta constraint on a controller parameter failed, e.g. @Min(1) on ?days=0. */
