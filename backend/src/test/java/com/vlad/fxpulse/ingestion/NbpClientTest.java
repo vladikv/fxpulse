@@ -1,6 +1,7 @@
 package com.vlad.fxpulse.ingestion;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.vlad.fxpulse.common.DateRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
