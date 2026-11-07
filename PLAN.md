@@ -36,13 +36,13 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** after triggering ingestion the DB contains ~a year of rates for all table A currencies, re-running adds no duplicates.
 
 ## Phase 3 — REST API
-- [ ] `GET /api/currencies` — list
-- [ ] `GET /api/rates/{code}?from=&to=` — time series (validate dates, from <= to, max range)
-- [ ] `GET /api/rates/{code}/stats?from=&to=` — min, max, avg, first, last, change %, volatility (std dev)
-- [ ] `GET /api/convert?from=EUR&to=USD&amount=100&date=` — cross-rate via PLN, latest available date if none
-- [ ] `GlobalExceptionHandler` + `ApiError` (404 unknown currency, 400 validation)
-- [ ] OpenAPI docs (springdoc) — ask before adding the dependency
-- [ ] Tests: `StatsCalculator` unit tests (edge cases: 1 point, empty), `@WebMvcTest` for controllers
+- [x] `GET /api/currencies` — list
+- [x] `GET /api/rates/{code}?from=&to=` — time series (validate dates, from <= to, max range)
+- [x] `GET /api/rates/{code}/stats?from=&to=` — min, max, avg, first, last, change %, volatility (std dev)
+- [x] `GET /api/convert?from=EUR&to=USD&amount=100&date=` — cross-rate via PLN, latest available date if none
+- [x] `GlobalExceptionHandler` + `ApiError` (404 unknown currency, 400 validation)
+- [x] OpenAPI docs (springdoc 3.2.0, approved) — Swagger UI at `/swagger-ui.html`, spec at `/v3/api-docs`
+- [x] Tests: `StatsCalculator` unit tests (edge cases: 1 point, empty), `@WebMvcTest` for controllers
 - **Done when:** all endpoints work in Postman/HTTP client and are covered by tests.
 
 ## Phase 4 — AI insights

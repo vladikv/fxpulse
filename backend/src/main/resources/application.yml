@@ -32,6 +32,13 @@ app:
     max-range-days: 366           # longest from..to range per request (a full leap year)
     default-range-days: 30        # used when the client omits "from"
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**         # document our API only, not actuator endpoints
+
 management:
   endpoints:
     web:
