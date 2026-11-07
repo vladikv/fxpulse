@@ -78,6 +78,11 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Integration tests use Testcontainers PostgreSQL — no H2.
 - External HTTP (NBP, Gemini) is stubbed with WireMock in tests; tests never hit the real internet.
 - Run `.\mvnw test` before declaring a task done.
+- Use the test-writer subagent only for changes that add or change behavior:
+  services, business logic (calculations, conversion, ingestion), controllers/endpoints,
+  external clients (NBP, Gemini) and DB queries/migrations.
+  Skip it for config, DTOs without logic, docs, renames/refactors without behavior change,
+  and frontend styling. If unsure, ask me. After tests are written, run `.\mvnw test`.
 
 ## Git
 - Commit after each finished, working step with a clear message (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`).
