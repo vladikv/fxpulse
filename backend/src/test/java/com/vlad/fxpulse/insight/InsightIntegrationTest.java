@@ -2,6 +2,7 @@ package com.vlad.fxpulse.insight;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.jayway.jsonpath.JsonPath;
 import com.vlad.fxpulse.TestcontainersConfiguration;
 import com.vlad.fxpulse.currency.Currency;
 import com.vlad.fxpulse.currency.CurrencyRepository;
@@ -112,20 +113,23 @@ class InsightIntegrationTest {
         stubGeminiOk();
 
         // When / Then: first call generates and stores
-        mockMvc.perform(get(URL))
+        String firstBody = mockMvc.perform(get(URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("EUR"))
                 .andExpect(jsonPath("$.from").value("2026-11-02"))
                 .andExpect(jsonPath("$.to").value("2026-11-04"))
                 .andExpect(jsonPath("$.content").value("EUR rose from 4.0 to 4.25 PLN."))
                 .andExpect(jsonPath("$.model").value(MODEL))
-                .andExpect(jsonPath("$.cached").value(false));
+                .andExpect(jsonPath("$.cached").value(false))
+                .andReturn().getResponse().getContentAsString();
+        String firstCreatedAt = JsonPath.read(firstBody, "$.createdAt");
         assertThat(insightRepository.count()).isEqualTo(1);
 
-        // second identical call comes from the DB
+        // second identical call comes from the DB, with the exact same createdAt (microsecond precision)
         mockMvc.perform(get(URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("EUR rose from 4.0 to 4.25 PLN."))
+                .andExpect(jsonPath("$.createdAt").value(firstCreatedAt))
                 .andExpect(jsonPath("$.cached").value(true));
         assertThat(insightRepository.count()).isEqualTo(1);
         gemini.verify(1, postRequestedFor(urlEqualTo(GENERATE_PATH)));

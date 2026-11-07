@@ -28,6 +28,7 @@ public class GeminiClient implements AiInsightClient {
     private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
 
     static final String API_KEY_HEADER = "x-goog-api-key";
+    private static final String FINISH_REASON_STOP = "STOP";
 
     private final RestClient restClient;
     private final AiProperties properties;
@@ -75,7 +76,14 @@ public class GeminiClient implements AiInsightClient {
             throw new AiRateLimitedException("AI rate limit reached, try again later");
         } catch (RestClientResponseException e) {
             // Any other 4xx/5xx. Log the status only: the body may echo parts of the request.
-            log.warn("Gemini returned HTTP {} for model {}", e.getStatusCode().value(), properties.model());
+            // A 4xx (bad key, unknown model, invalid request) is our configuration or code bug, so ERROR;
+            // a 5xx is Google's outage, so WARN.
+            if (e.getStatusCode().is4xxClientError()) {
+                log.error("Gemini rejected the request with HTTP {} for model {}",
+                        e.getStatusCode().value(), properties.model());
+            } else {
+                log.warn("Gemini returned HTTP {} for model {}", e.getStatusCode().value(), properties.model());
+            }
             throw new AiUnavailableException("AI service returned an error (HTTP " + e.getStatusCode().value() + ")", e);
         } catch (RestClientException e) {
             // Timeouts, connection refused, unreadable JSON.
@@ -87,6 +95,10 @@ public class GeminiClient implements AiInsightClient {
     /**
      * Joins the text parts of the first candidate. No candidate, or a candidate without text
      * (e.g. blocked by safety filters), counts as "no answer".
+     *
+     * <p>Only a finished answer is accepted: {@code finishReason} must be {@code STOP} (or absent).
+     * {@code MAX_TOKENS}, {@code SAFETY}, {@code RECITATION} etc. mean the text is cut off or unusable, and
+     * since the caller caches the answer forever, a half sentence must never get that far.
      */
     private String extractText(GeminiDtos.GenerateResponse response) {
         if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
@@ -102,6 +114,11 @@ public class GeminiClient implements AiInsightClient {
         if (text.isEmpty()) {
             log.warn("Gemini returned no text (finishReason={})", candidate.finishReason());
             throw new AiUnavailableException("AI service returned no answer");
+        }
+        String finishReason = candidate.finishReason();
+        if (finishReason != null && !FINISH_REASON_STOP.equals(finishReason)) {
+            log.warn("Gemini answer was not complete (finishReason={}) for model {}", finishReason, properties.model());
+            throw new AiUnavailableException("AI service returned an incomplete answer, try again later");
         }
         return text;
     }

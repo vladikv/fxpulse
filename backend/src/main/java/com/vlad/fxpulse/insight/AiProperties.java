@@ -11,6 +11,7 @@ import java.time.Duration;
  * @param model           model id, e.g. gemini-3.5-flash-lite
  * @param apiKey          secret from the GEMINI_API_KEY env var; empty means "AI not configured"
  * @param maxOutputTokens upper bound for the length of one answer (keeps free-tier usage small)
+ * @param maxGenerationsPerDay how many fresh AI calls the whole app may make per day (cache hits are free)
  */
 @ConfigurationProperties(prefix = "app.ai")
 public record AiProperties(
@@ -19,7 +20,8 @@ public record AiProperties(
         String apiKey,
         int maxOutputTokens,
         Duration connectTimeout,
-        Duration readTimeout) {
+        Duration readTimeout,
+        int maxGenerationsPerDay) {
 
     public boolean hasApiKey() {
         return apiKey != null && !apiKey.isBlank();
@@ -34,6 +36,7 @@ public record AiProperties(
         return "AiProperties[baseUrl=" + baseUrl + ", model=" + model
                 + ", apiKey=" + (hasApiKey() ? "***" : "<not set>")
                 + ", maxOutputTokens=" + maxOutputTokens
-                + ", connectTimeout=" + connectTimeout + ", readTimeout=" + readTimeout + "]";
+                + ", connectTimeout=" + connectTimeout + ", readTimeout=" + readTimeout
+                + ", maxGenerationsPerDay=" + maxGenerationsPerDay + "]";
     }
 }

@@ -46,13 +46,13 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** all endpoints work in Postman/HTTP client and are covered by tests.
 
 ## Phase 4 — AI insights
-- [ ] `AiInsightClient` interface + `GeminiClient` implementation (RestClient, key from env)
-- [ ] `InsightService`: compute stats -> build compact prompt -> call AI -> save to `ai_insight`
-- [ ] Cache: return saved insight if (currency, period) already exists
-- [ ] Handle 429 / timeouts / missing key with a clear error response (no crash)
-- [ ] `GET /api/insights/{code}?from=&to=`
-- [ ] Prompt template in resources (`prompts/trend-summary.txt`), output: short plain-English summary, no financial advice
-- [ ] Tests: WireMock Gemini stub (success, 429), cache hit test
+- [x] `AiInsightClient` interface + `GeminiClient` implementation (RestClient, key from env)
+- [x] `InsightService`: compute stats -> build compact prompt -> call AI -> save to `ai_insight`
+- [x] Cache: return saved insight if (currency, period) already exists
+- [x] Handle 429 / timeouts / missing key with a clear error response (no crash)
+- [x] `GET /api/insights/{code}?from=&to=`
+- [x] Prompt template in resources (`prompts/trend-summary.txt`), output: short plain-English summary, no financial advice
+- [x] Tests: WireMock Gemini stub (success, 429), cache hit test
 - **Done when:** first call generates and stores an insight, second call returns it from DB instantly.
 
 ## Phase 5 — Frontend

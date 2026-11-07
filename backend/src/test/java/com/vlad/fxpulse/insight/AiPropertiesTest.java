@@ -13,7 +13,21 @@ class AiPropertiesTest {
 
     private static AiProperties withKey(String apiKey) {
         return new AiProperties("http://localhost/v1beta", "gemini-test", apiKey, 256,
-                Duration.ofSeconds(2), Duration.ofSeconds(30));
+                Duration.ofSeconds(2), Duration.ofSeconds(30), 50);
+    }
+
+    @Test
+    void toString_always_includesMaxGenerationsPerDayAndStillMasksKey() {
+        // Given
+        AiProperties properties = withKey("super-secret-key");
+
+        // When
+        String text = properties.toString();
+
+        // Then
+        assertThat(text).contains("maxGenerationsPerDay=50")
+                .contains("apiKey=***")
+                .doesNotContain("super-secret-key");
     }
 
     @Test

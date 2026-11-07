@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 /**
  * An AI-generated trend summary, cached per (currency, period) so the AI is never called twice for the same key.
@@ -55,7 +56,9 @@ public class AiInsight {
         this.periodTo = periodTo;
         this.content = content;
         this.model = model;
-        this.createdAt = Instant.now();
+        // Postgres timestamptz keeps microseconds; truncating here makes the fresh response show
+        // the same value as the cached one read back from the DB later.
+        this.createdAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public Long getId() {

@@ -51,7 +51,13 @@ class GeminiClientTest {
 
     private static AiProperties propertiesWith(String apiKey, Duration readTimeout) {
         return new AiProperties(gemini.baseUrl(), MODEL, apiKey, MAX_OUTPUT_TOKENS,
-                Duration.ofSeconds(2), readTimeout);
+                Duration.ofSeconds(2), readTimeout, 50);
+    }
+
+    private static String responseWithTextAndFinishReason(String text, String finishReasonJson) {
+        return """
+                {"candidates": [{"content": {"role": "model", "parts": [{"text": "%s"}]}%s}]}
+                """.formatted(text, finishReasonJson);
     }
 
     private static String responseWithText(String textPartsJson) {
@@ -214,6 +220,45 @@ class GeminiClientTest {
         assertThatThrownBy(() -> client.generate("prompt"))
                 .isInstanceOf(AiUnavailableException.class)
                 .hasMessage("AI service returned no answer");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"MAX_TOKENS", "SAFETY"})
+    void generate_nonStopFinishReasonWithText_throwsIncompleteAnswer(String reason) {
+        // Given
+        gemini.stubFor(post(urlEqualTo(PATH)).willReturn(okJson(
+                responseWithTextAndFinishReason("Partial text", ", \"finishReason\": \"" + reason + "\""))));
+
+        // When / Then
+        assertThatThrownBy(() -> client.generate("prompt"))
+                .isInstanceOf(AiUnavailableException.class)
+                .hasMessage("AI service returned an incomplete answer, try again later");
+    }
+
+    @Test
+    void generate_finishReasonStop_returnsText() {
+        // Given
+        gemini.stubFor(post(urlEqualTo(PATH)).willReturn(okJson(
+                responseWithTextAndFinishReason("Complete text", ", \"finishReason\": \"STOP\""))));
+
+        // When
+        AiCompletion completion = client.generate("prompt");
+
+        // Then
+        assertThat(completion.text()).isEqualTo("Complete text");
+    }
+
+    @Test
+    void generate_textWithoutFinishReason_returnsText() {
+        // Given
+        gemini.stubFor(post(urlEqualTo(PATH)).willReturn(okJson(
+                responseWithTextAndFinishReason("No reason given", ""))));
+
+        // When
+        AiCompletion completion = client.generate("prompt");
+
+        // Then
+        assertThat(completion.text()).isEqualTo("No reason given");
     }
 
     @Test

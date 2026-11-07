@@ -43,8 +43,16 @@ class InsightServiceTest {
     @Mock
     private AiInsightClient aiClient;
 
+    @Mock
+    private AiDailyLimit dailyLimit;
+
     private InsightService service() {
-        return new InsightService(rateService, insightRepository, currencyRepository, promptBuilder, aiClient);
+        return new InsightService(rateService, insightRepository, currencyRepository, promptBuilder, aiClient,
+                dailyLimit);
+    }
+
+    private void givenSlotAvailable() {
+        when(dailyLimit.tryAcquire()).thenReturn(true);
     }
 
     private static RateStatsResponse stats(int count) {
@@ -86,6 +94,7 @@ class InsightServiceTest {
         RateStatsResponse stats = stats(10);
         when(rateService.getStats("eur", FROM, TO)).thenReturn(stats);
         givenLookup(Optional.empty());
+        givenSlotAvailable();
         when(promptBuilder.build(stats)).thenReturn("the prompt");
         when(aiClient.generate("the prompt")).thenReturn(new AiCompletion("fresh text", "gemini-x"));
         when(currencyRepository.getReferenceById("EUR")).thenReturn(EUR);
@@ -140,10 +149,50 @@ class InsightServiceTest {
     }
 
     @Test
+    void getInsight_dailyLimitReached_throwsRateLimitedWithoutCallingAiOrSaving() {
+        // Given
+        givenStats(10);
+        givenLookup(Optional.empty());
+        when(dailyLimit.tryAcquire()).thenReturn(false);
+
+        // When / Then
+        assertThatThrownBy(() -> service().getInsight("eur", FROM, TO))
+                .isInstanceOf(AiRateLimitedException.class)
+                .hasMessage("Daily AI insight limit reached, try again tomorrow");
+        verifyNoInteractions(aiClient, promptBuilder);
+        verify(insightRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void getInsight_cacheHit_doesNotTakeDailyLimitSlot() {
+        // Given
+        givenStats(10);
+        givenLookup(Optional.of(stored("cached text")));
+
+        // When
+        service().getInsight("eur", FROM, TO);
+
+        // Then
+        verifyNoInteractions(dailyLimit);
+    }
+
+    @Test
+    void getInsight_emptyRange_doesNotTakeDailyLimitSlot() {
+        // Given
+        givenStats(0);
+        givenLookup(Optional.empty());
+
+        // When / Then
+        assertThatThrownBy(() -> service().getInsight("eur", FROM, TO)).isInstanceOf(NotFoundException.class);
+        verifyNoInteractions(dailyLimit);
+    }
+
+    @Test
     void getInsight_aiRateLimited_propagatesAndSavesNothing() {
         // Given
         givenStats(10);
         givenLookup(Optional.empty());
+        givenSlotAvailable();
         when(promptBuilder.build(any())).thenReturn("p");
         when(aiClient.generate("p")).thenThrow(new AiRateLimitedException("AI rate limit reached, try again later"));
 
@@ -158,6 +207,7 @@ class InsightServiceTest {
         // Given
         givenStats(10);
         givenLookup(Optional.empty());
+        givenSlotAvailable();
         when(promptBuilder.build(any())).thenReturn("p");
         when(aiClient.generate("p")).thenThrow(new AiUnavailableException("AI service returned no answer"));
 
@@ -174,6 +224,7 @@ class InsightServiceTest {
         when(insightRepository.findByCurrencyCodeAndPeriodFromAndPeriodTo("EUR", FROM, TO))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(stored("winner text")));
+        givenSlotAvailable();
         when(promptBuilder.build(any())).thenReturn("p");
         when(aiClient.generate("p")).thenReturn(new AiCompletion("loser text", "m"));
         when(currencyRepository.getReferenceById("EUR")).thenReturn(EUR);
@@ -194,6 +245,7 @@ class InsightServiceTest {
         DataIntegrityViolationException original = new DataIntegrityViolationException("other violation");
         when(insightRepository.findByCurrencyCodeAndPeriodFromAndPeriodTo("EUR", FROM, TO))
                 .thenReturn(Optional.empty());
+        givenSlotAvailable();
         when(promptBuilder.build(any())).thenReturn("p");
         when(aiClient.generate("p")).thenReturn(new AiCompletion("text", "m"));
         when(currencyRepository.getReferenceById("EUR")).thenReturn(EUR);

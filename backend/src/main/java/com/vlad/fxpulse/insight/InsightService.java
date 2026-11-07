@@ -29,15 +29,17 @@ public class InsightService {
     private final CurrencyRepository currencyRepository;
     private final InsightPromptBuilder promptBuilder;
     private final AiInsightClient aiClient;
+    private final AiDailyLimit dailyLimit;
 
     public InsightService(RateService rateService, AiInsightRepository insightRepository,
                           CurrencyRepository currencyRepository, InsightPromptBuilder promptBuilder,
-                          AiInsightClient aiClient) {
+                          AiInsightClient aiClient, AiDailyLimit dailyLimit) {
         this.rateService = rateService;
         this.insightRepository = insightRepository;
         this.currencyRepository = currencyRepository;
         this.promptBuilder = promptBuilder;
         this.aiClient = aiClient;
+        this.dailyLimit = dailyLimit;
     }
 
     public InsightResponse getInsight(String code, LocalDate from, LocalDate to) {
@@ -57,6 +59,11 @@ public class InsightService {
                     + " and " + stats.to() + "; nothing to summarize");
         }
 
+        // Every new (from, to) pair is a cache miss, so without a cap a client could vary the dates
+        // and use up the whole free-tier quota. Checked only here: cache hits never count.
+        if (!dailyLimit.tryAcquire()) {
+            throw new AiRateLimitedException("Daily AI insight limit reached, try again tomorrow");
+        }
         AiCompletion completion = aiClient.generate(promptBuilder.build(stats));
         log.info("Generated insight for {} {}..{} with {}", stats.code(), stats.from(), stats.to(),
                 completion.model());
