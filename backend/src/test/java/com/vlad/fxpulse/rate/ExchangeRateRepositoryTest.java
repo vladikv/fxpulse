@@ -103,6 +103,37 @@ class ExchangeRateRepositoryTest {
         assertThat(dates).containsExactlyInAnyOrder(LocalDate.parse("2026-01-05"), LocalDate.parse("2026-01-06"));
     }
 
+    @Test
+    void findsLatestRateOnOrBeforeDate() {
+        exchangeRateRepository.save(rate(eur, "2026-01-08", "4.2600"));
+        exchangeRateRepository.save(rate(eur, "2026-01-09", "4.2700")); // Friday
+        exchangeRateRepository.save(rate(eur, "2026-01-12", "4.2800")); // Monday, after the asked date
+        exchangeRateRepository.save(rate(usd, "2026-01-10", "3.9000")); // other currency
+        exchangeRateRepository.flush();
+
+        // Saturday -> Friday's rate
+        assertThat(exchangeRateRepository
+                .findFirstByCurrencyCodeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+                        "EUR", LocalDate.parse("2026-01-10")))
+                .get()
+                .extracting(ExchangeRate::getEffectiveDate)
+                .isEqualTo(LocalDate.parse("2026-01-09"));
+
+        // exact date match is included
+        assertThat(exchangeRateRepository
+                .findFirstByCurrencyCodeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+                        "EUR", LocalDate.parse("2026-01-08")))
+                .get()
+                .extracting(ExchangeRate::getMid)
+                .isEqualTo(new BigDecimal("4.2600"));
+
+        // before any stored rate -> empty
+        assertThat(exchangeRateRepository
+                .findFirstByCurrencyCodeAndEffectiveDateLessThanEqualOrderByEffectiveDateDesc(
+                        "EUR", LocalDate.parse("2026-01-07")))
+                .isEmpty();
+    }
+
     private static ExchangeRate rate(Currency currency, String date, String mid) {
         return new ExchangeRate(currency, LocalDate.parse(date), new BigDecimal(mid), "001/A/NBP/2026");
     }

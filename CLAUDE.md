@@ -72,16 +72,28 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Free tier has rate limits: handle HTTP 429 gracefully (return a clear message, don't crash).
 - Cache insights in the DB per (currency, period_from, period_to); never call Gemini twice for the same key.
 - Send only aggregated numbers (stats), not huge raw datasets, to keep prompts small.
+- API (verified 2026-11-07): we use `POST {base}/v1beta/models/{model}:generateContent`. Google's docs now call
+  `generateContent` **legacy** (still supported, no sunset date); the new default is the Interactions API
+  (`POST /v1beta/interactions`, stateful unless `store=false`). Switching later only touches `GeminiClient`.
+- Send the key in the `x-goog-api-key` header, never as `?key=` in the URL (URLs end up in logs).
+- Stable free-tier models (2026-11): `gemini-3.5-flash-lite` (our default), `gemini-3.1-flash-lite`, `gemini-3.6-flash`.
+  `temperature`/`topP`/`topK` are silently ignored on 3.6 Flash and newer, so we don't send them.
+- Free-tier limits are per project (not per key); daily quotas reset at midnight Pacific time.
 
 ## Testing rules
 - Every service gets unit tests; every controller gets a `@WebMvcTest`.
 - Integration tests use Testcontainers PostgreSQL — no H2.
 - External HTTP (NBP, Gemini) is stubbed with WireMock in tests; tests never hit the real internet.
 - Run `.\mvnw test` before declaring a task done.
+- Use the test-writer subagent only for changes that add or change behavior:
+  services, business logic (calculations, conversion, ingestion), controllers/endpoints,
+  external clients (NBP, Gemini) and DB queries/migrations.
+  Skip it for config, DTOs without logic, docs, renames/refactors without behavior change,
+  and frontend styling. If unsure, ask me. After tests are written, run `.\mvnw test`.
 
 ## Git
 - Commit after each finished, working step with a clear message (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`).
-- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/phase-2-ingestion`, `fix/...`, `docs/...`).
+- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/ingestion`, `fix/...`, `docs/...`; no phase words in branch names).
   Never commit feature work directly to `main`.
 - Push the branch and open a pull request into `main` (via `gh pr create`); merge only after tests pass and I approve.
 - Keep branches after merging: never delete them, locally or on GitHub (no `--delete-branch`).
@@ -92,4 +104,9 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Keep changes small and focused; one phase step at a time.
 - Do not add dependencies that are not listed above without asking first.
 - After finishing a step, briefly explain the key decisions (I will be asked about them in the interview).
+- At the end of every phase, explain what was done in the whole phase: endpoints/features added, files and
+  packages touched, key decisions and trade-offs, deviations from the plan, test count, and what comes next.
+- At the end of every phase, also update `docs/about.md` (local only, git-ignored, never commit it):
+  it explains every folder and file in the repo. Add new files, update changed ones, remove deleted ones,
+  and refresh the "State after Phase N" line and the test count.
 - If something in the NBP/Gemini API behaves differently than described here, tell me and update this file.

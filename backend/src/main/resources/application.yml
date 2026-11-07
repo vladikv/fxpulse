@@ -28,6 +28,24 @@ app:
     scheduled-days: 7             # the daily job re-checks the last week (catches up after holidays/outages)
     cron: "0 30 12 * * MON-FRI"   # NBP publishes table A around 11:45-12:15 Warsaw time on business days
     scheduler-enabled: ${INGESTION_SCHEDULER_ENABLED:true}
+  rates:
+    max-range-days: 366           # longest from..to range per request (a full leap year)
+    default-range-days: 30        # used when the client omits "from"
+  ai:
+    base-url: https://generativelanguage.googleapis.com/v1beta
+    model: gemini-3.5-flash-lite  # stable Flash-Lite with a free tier
+    api-key: ${GEMINI_API_KEY:}   # secret: only from the env var; empty = AI disabled (503)
+    max-output-tokens: 1024       # a 3-4 sentence summary needs ~150; headroom so it is never cut off
+    connect-timeout: 5s
+    read-timeout: 30s             # LLM answers take seconds
+    max-generations-per-day: 50   # global cap on fresh Gemini calls, so varying dates can't drain the quota
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**         # document our API only, not actuator endpoints
 
 management:
   endpoints:
