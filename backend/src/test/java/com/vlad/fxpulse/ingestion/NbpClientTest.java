@@ -5,6 +5,8 @@ import com.vlad.fxpulse.common.DateRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -108,5 +111,99 @@ class NbpClientTest {
 
         assertThatThrownBy(() -> client.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04")))
                 .isInstanceOf(RestClientException.class);
+    }
+
+    @Test
+    void throwsOnBadRequest() {
+        // Real NBP answer when a range exceeds the server limit: only 404 means "no data", other 4xx must surface
+        nbp.stubFor(get(urlPathMatching("/exchangerates/rates/A/EUR/.*")).willReturn(aResponse()
+                .withStatus(400)
+                .withHeader("Content-Type", "text/plain; charset=utf-8")
+                .withBody("400 BadRequest - Przekroczony limit 367 dni / Limit of 367 days has been exceeded")));
+
+        assertThatThrownBy(() -> client.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04")))
+                .isInstanceOf(HttpClientErrorException.BadRequest.class);
+    }
+
+    @Test
+    void throwsOnReadTimeout() {
+        NbpClient impatientClient = new NbpClient(
+                new NbpProperties(nbp.baseUrl(), 93, Duration.ofSeconds(1), Duration.ofSeconds(1)));
+        nbp.stubFor(get(urlPathMatching("/exchangerates/rates/A/EUR/.*"))
+                .willReturn(okJson("{\"rates\":[]}").withFixedDelay(3000)));
+
+        assertThatThrownBy(() -> impatientClient.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04")))
+                .isInstanceOf(ResourceAccessException.class);
+    }
+
+    @Test
+    void throwsOnMalformedJson() {
+        nbp.stubFor(get(urlPathMatching("/exchangerates/rates/A/EUR/.*")).willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody("<html>not json</html>")));
+
+        assertThatThrownBy(() -> client.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04")))
+                .isInstanceOf(RestClientException.class);
+    }
+
+    @Test
+    void returnsEmptyListWhenRatesAreNull() {
+        nbp.stubFor(get(urlPathMatching("/exchangerates/rates/A/EUR/.*")).willReturn(okJson("""
+                {"table":"A","currency":"euro","code":"EUR","rates":null}
+                """)));
+
+        List<NbpDtos.SeriesRate> rates = client.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04"));
+
+        assertThat(rates).isEmpty();
+    }
+
+    @Test
+    void keepsOtherChunksWhenOneChunkIsEmpty() {
+        // 200 days -> 3 chunks; the middle one has no data (404), the outer ones have one rate each
+        nbp.stubFor(get(urlEqualTo("/exchangerates/rates/A/EUR/2026-01-01/2026-04-03/?format=json")).willReturn(okJson("""
+                {"table":"A","currency":"euro","code":"EUR","rates":[{"no":"001/A/NBP/2026","effectiveDate":"2026-01-02","mid":4.2156}]}
+                """)));
+        nbp.stubFor(get(urlEqualTo("/exchangerates/rates/A/EUR/2026-04-04/2026-07-05/?format=json")).willReturn(aResponse()
+                .withStatus(404)
+                .withHeader("Content-Type", "text/plain; charset=utf-8")
+                .withBody("404 NotFound - Not Found - Brak danych")));
+        nbp.stubFor(get(urlEqualTo("/exchangerates/rates/A/EUR/2026-07-06/2026-07-19/?format=json")).willReturn(okJson("""
+                {"table":"A","currency":"euro","code":"EUR","rates":[{"no":"130/A/NBP/2026","effectiveDate":"2026-07-07","mid":4.2611}]}
+                """)));
+
+        List<NbpDtos.SeriesRate> rates = client.fetchRates("EUR", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-07-19"));
+
+        assertThat(rates).extracting(NbpDtos.SeriesRate::effectiveDate)
+                .containsExactly(LocalDate.parse("2026-01-02"), LocalDate.parse("2026-07-07"));
+    }
+
+    @Test
+    void throwsWhenTableAIsEmpty() {
+        nbp.stubFor(get(urlEqualTo("/exchangerates/tables/A/?format=json")).willReturn(okJson("[]")));
+
+        assertThatThrownBy(() -> client.fetchCurrentTableA())
+                .isInstanceOf(RestClientException.class)
+                .hasMessageContaining("no table A");
+    }
+
+    @Test
+    void throwsOnTableAServerError() {
+        nbp.stubFor(get(urlEqualTo("/exchangerates/tables/A/?format=json")).willReturn(aResponse().withStatus(500)));
+
+        assertThatThrownBy(() -> client.fetchCurrentTableA())
+                .isInstanceOf(RestClientException.class);
+    }
+
+    @Test
+    void sendsJsonAcceptHeader() {
+        nbp.stubFor(get(urlEqualTo("/exchangerates/tables/A/?format=json")).willReturn(okJson("""
+                [{"table":"A","no":"217/A/NBP/2026","effectiveDate":"2026-11-06","rates":[]}]
+                """)));
+
+        client.fetchCurrentTableA();
+
+        nbp.verify(getRequestedFor(urlEqualTo("/exchangerates/tables/A/?format=json"))
+                .withHeader("Accept", equalTo("application/json")));
     }
 }
