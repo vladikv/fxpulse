@@ -128,9 +128,10 @@ class NbpClientTest {
     @Test
     void throwsOnReadTimeout() {
         NbpClient impatientClient = new NbpClient(
-                new NbpProperties(nbp.baseUrl(), 93, Duration.ofSeconds(1), Duration.ofSeconds(1)));
+                new NbpProperties(nbp.baseUrl(), 93, Duration.ofMillis(200), Duration.ofMillis(200)));
+        // A short timeout against a longer delay tests the same thing without slowing the suite by seconds.
         nbp.stubFor(get(urlPathMatching("/exchangerates/rates/A/EUR/.*"))
-                .willReturn(okJson("{\"rates\":[]}").withFixedDelay(3000)));
+                .willReturn(okJson("{\"rates\":[]}").withFixedDelay(1000)));
 
         assertThatThrownBy(() -> impatientClient.fetchRates("EUR", LocalDate.parse("2026-11-02"), LocalDate.parse("2026-11-04")))
                 .isInstanceOf(ResourceAccessException.class);
@@ -176,6 +177,12 @@ class NbpClientTest {
 
         assertThat(rates).extracting(NbpDtos.SeriesRate::effectiveDate)
                 .containsExactly(LocalDate.parse("2026-01-02"), LocalDate.parse("2026-07-07"));
+        // WireMock answers an unmatched URL with 404, which the client also reads as "no data". So the
+        // result alone can't prove the chunk boundaries; verify the exact three requests instead.
+        nbp.verify(1, getRequestedFor(urlEqualTo("/exchangerates/rates/A/EUR/2026-01-01/2026-04-03/?format=json")));
+        nbp.verify(1, getRequestedFor(urlEqualTo("/exchangerates/rates/A/EUR/2026-04-04/2026-07-05/?format=json")));
+        nbp.verify(1, getRequestedFor(urlEqualTo("/exchangerates/rates/A/EUR/2026-07-06/2026-07-19/?format=json")));
+        nbp.verify(3, getRequestedFor(urlPathMatching("/exchangerates/rates/A/EUR/.*")));
     }
 
     @Test
