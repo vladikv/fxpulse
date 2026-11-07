@@ -99,4 +99,7 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - After finishing a step, briefly explain the key decisions (I will be asked about them in the interview).
 - At the end of every phase, explain what was done in the whole phase: endpoints/features added, files and
   packages touched, key decisions and trade-offs, deviations from the plan, test count, and what comes next.
+- At the end of every phase, also update `docs/about.md` (local only, git-ignored, never commit it):
+  it explains every folder and file in the repo. Add new files, update changed ones, remove deleted ones,
+  and refresh the "State after Phase N" line and the test count.
 - If something in the NBP/Gemini API behaves differently than described here, tell me and update this file.
