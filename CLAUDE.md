@@ -72,6 +72,13 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Free tier has rate limits: handle HTTP 429 gracefully (return a clear message, don't crash).
 - Cache insights in the DB per (currency, period_from, period_to); never call Gemini twice for the same key.
 - Send only aggregated numbers (stats), not huge raw datasets, to keep prompts small.
+- API (verified 2026-11-07): we use `POST {base}/v1beta/models/{model}:generateContent`. Google's docs now call
+  `generateContent` **legacy** (still supported, no sunset date); the new default is the Interactions API
+  (`POST /v1beta/interactions`, stateful unless `store=false`). Switching later only touches `GeminiClient`.
+- Send the key in the `x-goog-api-key` header, never as `?key=` in the URL (URLs end up in logs).
+- Stable free-tier models (2026-11): `gemini-3.5-flash-lite` (our default), `gemini-3.1-flash-lite`, `gemini-3.6-flash`.
+  `temperature`/`topP`/`topK` are silently ignored on 3.6 Flash and newer, so we don't send them.
+- Free-tier limits are per project (not per key); daily quotas reset at midnight Pacific time.
 
 ## Testing rules
 - Every service gets unit tests; every controller gets a `@WebMvcTest`.
