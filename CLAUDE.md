@@ -92,4 +92,6 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Keep changes small and focused; one phase step at a time.
 - Do not add dependencies that are not listed above without asking first.
 - After finishing a step, briefly explain the key decisions (I will be asked about them in the interview).
+- At the end of every phase, explain what was done in the whole phase: endpoints/features added, files and
+  packages touched, key decisions and trade-offs, deviations from the plan, test count, and what comes next.
 - If something in the NBP/Gemini API behaves differently than described here, tell me and update this file.
