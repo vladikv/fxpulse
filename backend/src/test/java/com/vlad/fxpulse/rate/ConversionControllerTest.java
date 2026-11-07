@@ -16,6 +16,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,6 +70,27 @@ class ConversionControllerTest {
         mockMvc.perform(get("/api/convert").param("from", "EUR").param("to", "USD").param("amount", "ten"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid value 'ten' for parameter 'amount'"));
+    }
+
+    @Test
+    void rejectsHugeAmount() throws Exception {
+        mockMvc.perform(get("/api/convert").param("from", "EUR").param("to", "USD").param("amount", "1E+999999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verifyNotCalled();
+    }
+
+    @Test
+    void wrongHttpMethodReturns405NotA500() throws Exception {
+        mockMvc.perform(post("/api/convert").param("from", "EUR").param("to", "USD").param("amount", "1"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", "GET"))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.error").value("Method Not Allowed"))
+                .andExpect(jsonPath("$.path").value("/api/convert"));
+
+        verifyNotCalled();
     }
 
     @Test

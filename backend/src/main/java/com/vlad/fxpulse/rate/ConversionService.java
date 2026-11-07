@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -24,7 +25,11 @@ public class ConversionService {
     static final String PLN = "PLN";
 
     static final int RESULT_SCALE = 2;
-    static final int CROSS_RATE_SCALE = 6;
+    /**
+     * The cross rate gets 10 significant digits, not a fixed number of decimals: IDR -> EUR is about
+     * 0.0000476, and a fixed scale of 6 would keep only 2 meaningful digits of it.
+     */
+    static final MathContext CROSS_RATE_PRECISION = new MathContext(10, RoundingMode.HALF_UP);
 
     private final ExchangeRateRepository exchangeRateRepository;
     private final CurrencyService currencyService;
@@ -52,7 +57,7 @@ public class ConversionService {
         // and then multiplying would add a second rounding error that grows with the amount.
         BigDecimal result = amount.multiply(fromRate.mid())
                 .divide(toRate.mid(), RESULT_SCALE, RoundingMode.HALF_UP);
-        BigDecimal crossRate = fromRate.mid().divide(toRate.mid(), CROSS_RATE_SCALE, RoundingMode.HALF_UP);
+        BigDecimal crossRate = fromRate.mid().divide(toRate.mid(), CROSS_RATE_PRECISION);
 
         return new ConversionResponse(fromCode, toCode, amount, result, crossRate,
                 fromRate.date(), toRate.date());

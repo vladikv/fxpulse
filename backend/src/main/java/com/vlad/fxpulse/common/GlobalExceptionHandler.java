@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -72,6 +73,16 @@ public class GlobalExceptionHandler {
     /** Anything unexpected: log the full stack trace, but never send internals to the client. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
+        // This catch-all runs before Spring's default resolver, so it also receives Spring MVC's own
+        // client errors (wrong HTTP method -> 405, bad Accept -> 406, bad Content-Type -> 415, ...).
+        // Those implement ErrorResponse and carry the right status: keep it instead of turning it into 500.
+        if (ex instanceof ErrorResponse errorResponse) {
+            HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());
+            ApiError body = new ApiError(Instant.now(), status.value(), status.getReasonPhrase(),
+                    errorResponse.getBody().getDetail(), request.getRequestURI());
+            // e.g. the Allow header of a 405, which tells the client which methods are supported
+            return ResponseEntity.status(status).headers(errorResponse.getHeaders()).body(body);
+        }
         log.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request);
     }

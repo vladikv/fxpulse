@@ -58,7 +58,7 @@ class ConversionServiceTest {
         assertThat(response.to()).isEqualTo("USD");
         assertThat(response.amount()).isEqualTo("100");
         assertThat(response.result()).isEqualTo("106.25");       // 100 * 4.25 / 4.00
-        assertThat(response.rate()).isEqualTo("1.062500");
+        assertThat(response.rate()).isEqualByComparingTo("1.0625");
         assertThat(response.fromRateDate()).isEqualTo(FRIDAY);
         assertThat(response.toRateDate()).isEqualTo(FRIDAY);
     }
@@ -72,7 +72,7 @@ class ConversionServiceTest {
         ConversionResponse response = conversionService.convert("EUR", "USD", new BigDecimal("10"), date);
 
         assertThat(response.result()).isEqualTo("10.00");
-        assertThat(response.rate()).isEqualTo("1.000000");
+        assertThat(response.rate()).isEqualByComparingTo("1");
     }
 
     @Test
@@ -82,7 +82,7 @@ class ConversionServiceTest {
         ConversionResponse response = conversionService.convert("PLN", "EUR", new BigDecimal("100"), null);
 
         assertThat(response.result()).isEqualTo("23.53");        // 100 / 4.25 = 23.5294...
-        assertThat(response.rate()).isEqualTo("0.235294");
+        assertThat(response.rate()).isEqualTo("0.2352941176");
         assertThat(response.fromRateDate()).isNull();
         assertThat(response.toRateDate()).isEqualTo(FRIDAY);
         verify(currencyService, never()).requireExists("PLN");   // PLN is not stored in the DB
@@ -104,7 +104,7 @@ class ConversionServiceTest {
         ConversionResponse response = conversionService.convert("PLN", "PLN", new BigDecimal("5"), null);
 
         assertThat(response.result()).isEqualTo("5.00");
-        assertThat(response.rate()).isEqualTo("1.000000");
+        assertThat(response.rate()).isEqualByComparingTo("1");
         verifyNoInteractions(exchangeRateRepository, currencyService);
     }
 
@@ -115,9 +115,22 @@ class ConversionServiceTest {
 
         ConversionResponse response = conversionService.convert("EUR", "USD", new BigDecimal("1000000"), null);
 
-        // exact: 4,321,000 / 3.7777 = 1,143,817.666...; via the rounded rate 1.143818 it would be 1,143,818.00
-        assertThat(response.rate()).isEqualTo("1.143818");
+        // exact: 4,321,000 / 3.7777 = 1,143,817.666...; rounding the rate to 6 decimals (1.143818)
+        // first and then multiplying would give 1,143,818.00
+        assertThat(response.rate()).isEqualTo("1.143817667");
         assertThat(response.result()).isEqualTo("1143817.67");
+    }
+
+    @Test
+    void crossRateKeepsSignificantDigitsForLowValueCurrencies() {
+        stubRate("IDR", TODAY, FRIDAY, "0.0002");     // about what 1 IDR costs in PLN
+        stubRate("EUR", TODAY, FRIDAY, "4.2000");
+
+        ConversionResponse response = conversionService.convert("IDR", "EUR", new BigDecimal("1000000"), null);
+
+        // a fixed scale of 6 would give 0.000048; 10 significant digits keep the real value
+        assertThat(response.rate()).isEqualTo("0.00004761904762");
+        assertThat(response.result()).isEqualTo("47.62");
     }
 
     @Test

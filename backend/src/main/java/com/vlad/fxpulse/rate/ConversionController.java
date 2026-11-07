@@ -1,5 +1,6 @@
 package com.vlad.fxpulse.rate;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -30,7 +31,9 @@ public class ConversionController {
     public ConversionResponse convert(
             @RequestParam @Pattern(regexp = CODE_REGEX, message = CODE_MESSAGE) String from,
             @RequestParam @Pattern(regexp = CODE_REGEX, message = CODE_MESSAGE) String to,
-            @RequestParam @NotNull @Positive BigDecimal amount,
+            // @Digits caps the size: without it, amount=1E+999999 is a "valid" positive number whose
+            // multiplication and division would burn CPU and memory on the server.
+            @RequestParam @NotNull @Positive @Digits(integer = 15, fraction = 6) BigDecimal amount,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return conversionService.convert(from, to, amount, date);
     }
