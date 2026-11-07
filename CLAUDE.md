@@ -78,10 +78,15 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Integration tests use Testcontainers PostgreSQL — no H2.
 - External HTTP (NBP, Gemini) is stubbed with WireMock in tests; tests never hit the real internet.
 - Run `.\mvnw test` before declaring a task done.
+- Use the test-writer subagent only for changes that add or change behavior:
+  services, business logic (calculations, conversion, ingestion), controllers/endpoints,
+  external clients (NBP, Gemini) and DB queries/migrations.
+  Skip it for config, DTOs without logic, docs, renames/refactors without behavior change,
+  and frontend styling. If unsure, ask me. After tests are written, run `.\mvnw test`.
 
 ## Git
 - Commit after each finished, working step with a clear message (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`).
-- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/phase-2-ingestion`, `fix/...`, `docs/...`).
+- Every feature/phase step gets its own branch from an up-to-date `main` (e.g. `feat/ingestion`, `fix/...`, `docs/...`; no phase words in branch names).
   Never commit feature work directly to `main`.
 - Push the branch and open a pull request into `main` (via `gh pr create`); merge only after tests pass and I approve.
 - Keep branches after merging: never delete them, locally or on GitHub (no `--delete-branch`).
@@ -92,4 +97,6 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Keep changes small and focused; one phase step at a time.
 - Do not add dependencies that are not listed above without asking first.
 - After finishing a step, briefly explain the key decisions (I will be asked about them in the interview).
+- At the end of every phase, explain what was done in the whole phase: endpoints/features added, files and
+  packages touched, key decisions and trade-offs, deviations from the plan, test count, and what comes next.
 - If something in the NBP/Gemini API behaves differently than described here, tell me and update this file.

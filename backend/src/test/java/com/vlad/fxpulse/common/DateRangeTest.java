@@ -1,4 +1,4 @@
-package com.vlad.fxpulse.ingestion;
+package com.vlad.fxpulse.common;
 
 import org.junit.jupiter.api.Test;
 

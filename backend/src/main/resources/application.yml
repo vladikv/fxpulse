@@ -28,6 +28,16 @@ app:
     scheduled-days: 7             # the daily job re-checks the last week (catches up after holidays/outages)
     cron: "0 30 12 * * MON-FRI"   # NBP publishes table A around 11:45-12:15 Warsaw time on business days
     scheduler-enabled: ${INGESTION_SCHEDULER_ENABLED:true}
+  rates:
+    max-range-days: 366           # longest from..to range per request (a full leap year)
+    default-range-days: 30        # used when the client omits "from"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**         # document our API only, not actuator endpoints
 
 management:
   endpoints:
