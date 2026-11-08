@@ -1,5 +1,7 @@
 # FxPulse
 
+[![CI](https://github.com/vladikv/fxpulse/actions/workflows/ci.yml/badge.svg)](https://github.com/vladikv/fxpulse/actions/workflows/ci.yml)
+
 Ingests official PLN exchange rates from the [NBP Web API](https://api.nbp.pl/), stores them in PostgreSQL,
 exposes a REST API with statistics and currency conversion, and generates AI trend summaries with Google Gemini.
 
