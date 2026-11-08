@@ -36,7 +36,7 @@ jobs:
       - run: ./mvnw -B verify
 
   frontend:
-    name: Frontend (lint + build)
+    name: Frontend (lint + test + build)
     runs-on: ubuntu-latest
     timeout-minutes: 15   # a hung run fails fast instead of using up to 6 hours
     defaults:
@@ -51,6 +51,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm test        # Vitest: hooks and utils
       - run: npm run build   # tsc -b type-check + Vite production build
 
   docker:
