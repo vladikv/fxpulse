@@ -9,8 +9,9 @@ services:
     plan: free                      # 512 MB, sleeps after 15 min without traffic
     region: frankfurt               # close to the Neon database (AWS eu-central-1) and to NBP
     rootDir: backend                # only changes in backend/ trigger a new build
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    # With rootDir set, Render resolves these two paths relative to rootDir (not the repo root).
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /actuator/health
     autoDeployTrigger: checksPass   # deploy a commit on main only after the CI checks are green
     envVars:
