@@ -1,0 +1,7 @@
+# node_modules is installed inside the image (npm ci); local builds and env files stay out.
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log

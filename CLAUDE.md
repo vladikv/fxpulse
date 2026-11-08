@@ -45,7 +45,8 @@ Layering: controller -> service -> repository. Controllers never touch repositor
   `.env` is parsed as a `.properties` file: write values without quotes.
 - Backend tests: `cd backend; .\mvnw test`
 - Run frontend: `cd frontend; npm run dev`
-- Full stack in Docker: `docker compose up --build`
+- Full stack in Docker: `docker compose up --build` — frontend http://localhost:3000, backend :8098, DB :25432
+- CI: `.github/workflows/ci.yml` (backend `./mvnw verify`, frontend lint + build, `docker compose build`)
 
 ## Conventions
 - Money and rates: always `BigDecimal` (never `double`), scale 4 for NBP mid rates, `RoundingMode.HALF_UP` for results.

@@ -1,0 +1,10 @@
+# Keep the build context small and never send local build output or logs into the image build.
+target/
+*.log
+.idea/
+*.iml
+.vscode/
+# Defense in depth: never send git data or env files into a build, even if one appears here later.
+.git
+.env
+.env.*
