@@ -35,7 +35,7 @@ class ConfigPropertiesValidationTest {
 
     @Configuration
     @EnableConfigurationProperties({NbpProperties.class, IngestionProperties.class, RateProperties.class,
-            AiProperties.class})
+            AiProperties.class, CorsProperties.class})
     static class Config {
     }
 
@@ -60,6 +60,7 @@ class ConfigPropertiesValidationTest {
         VALID.put("app.ai.connect-timeout", "5s");
         VALID.put("app.ai.read-timeout", "30s");
         VALID.put("app.ai.max-generations-per-day", "50");
+        VALID.put("app.cors.allowed-origins", "http://localhost:5173,https://fxpulse.example");
     }
 
     @Test
@@ -72,6 +73,8 @@ class ConfigPropertiesValidationTest {
             AiProperties ai = context.getBean(AiProperties.class);
             assertThat(ai.hasApiKey()).isFalse();
             assertThat(ai.maxGenerationsPerDay()).isEqualTo(50);
+            assertThat(context.getBean(CorsProperties.class).allowedOrigins())
+                    .containsExactly("http://localhost:5173", "https://fxpulse.example");
         });
     }
 
@@ -97,6 +100,8 @@ class ConfigPropertiesValidationTest {
             "app.ai.max-output-tokens     | 0     | maxOutputTokens",
             "app.ai.read-timeout          | 0s    | readTimeout",
             "app.ai.max-generations-per-day | -1  | maxGenerationsPerDay",
+            // CORS
+            "app.cors.allowed-origins     | ''    | allowedOrigins",
     })
     void failsAtStartupOnInvalidValue(String property, String value, String field) {
         Map<String, String> properties = new LinkedHashMap<>(VALID);
