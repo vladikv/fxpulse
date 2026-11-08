@@ -56,11 +56,12 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** first call generates and stores an insight, second call returns it from DB instantly.
 
 ## Phase 5 — Frontend
-- [ ] Vite + React + TypeScript in `/frontend`, API base URL from env
-- [ ] Dashboard: currency selector, date range picker, line chart (Recharts), stats cards
-- [ ] Converter widget
-- [ ] "Generate AI insight" panel with loading/error states
-- [ ] CORS config on backend (allowed origins from config)
+- [x] Vite + React + TypeScript in `/frontend`, API base URL from env (`VITE_API_BASE_URL`); linting with oxlint (the Vite template's default)
+- [x] Dashboard: currency selector, date range picker (presets + native date inputs), line chart (Recharts) with data table view, stats cards
+- [x] Converter widget (all currencies + PLN, optional date, shows the NBP rate dates used)
+- [x] "Generate AI insight" panel with loading/error states (button-triggered to save quota; 429/503/404 headings)
+- [x] CORS config on backend (allowed origins from `app.cors.allowed-origins` / `CORS_ALLOWED_ORIGINS`, GET only)
+- [x] Extra: currency flags (flag-icons, approved), readable AI summary layout, `spring-boot:run` reads `.env`
 - **Done when:** whole flow works in the browser locally.
 
 ## Phase 6 — Docker & CI

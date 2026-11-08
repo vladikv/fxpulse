@@ -110,6 +110,15 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Only for `mvnw spring-boot:run` (local development): also read the repo's .env file
+					     (GEMINI_API_KEY, DB_*), like Docker Compose does. Real env vars still win, and "optional:"
+					     means a missing file is fine. Deliberately not in application.yml: tests, the jar and
+					     Docker must never pick up a developer's secrets from that file. -->
+					<arguments>
+						<argument>--spring.config.import=optional:file:../.env[.properties]</argument>
+					</arguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

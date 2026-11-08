@@ -1,0 +1,49 @@
+/* Global base styles and colour tokens (light + dark). */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c1f24;
+  --text-secondary: #3a404a;
+  --muted: #5f6672;
+  --border: #dde1e6;
+  --accent: #2563eb;
+  --on-accent: #ffffff;
+  --chart-line: #2563eb;
+  --grid: #e6e9ed;
+  --positive: #15803d;
+  --negative: #b91c1c;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121418;
+    --surface: #1b1e24;
+    --text: #e6e8eb;
+    --text-secondary: #c4c9d0;
+    --muted: #9aa2ad;
+    --border: #2e333b;
+    --accent: #60a5fa;
+    --on-accent: #0b1220;
+    --chart-line: #4b8ef7; /* #60a5fa is too light for a data line on the dark surface */
+    --grid: #2a2f37;
+    --positive: #4ade80;
+    --negative: #f87171;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+}

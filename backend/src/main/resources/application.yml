@@ -39,6 +39,10 @@ app:
     connect-timeout: 5s
     read-timeout: 30s             # LLM answers take seconds
     max-generations-per-day: 50   # global cap on fresh Gemini calls, so varying dates can't drain the quota
+  cors:
+    # Browser origins allowed to call /api/** (comma-separated in the env var). Default: Vite dev server.
+    # An origin is scheme://host[:port] with no path and no trailing slash, or it never matches.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 springdoc:
   api-docs:

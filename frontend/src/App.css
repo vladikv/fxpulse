@@ -1,0 +1,324 @@
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  margin: 4px 0 24px;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--negative);
+}
+
+code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* ---- Panel and controls ---- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+select,
+input,
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+select {
+  max-width: 100%;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.presets {
+  display: flex;
+  gap: 4px;
+}
+
+.preset.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---- Dashboard ---- */
+
+.dashboard {
+  transition: opacity 0.15s;
+}
+
+.dashboard.loading {
+  opacity: 0.55;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.stat-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.stat-card dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stat-card dd {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-up {
+  color: var(--positive);
+}
+
+.trend-down {
+  color: var(--negative);
+}
+
+.chart {
+  margin: 0;
+}
+
+.chart-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.data-table {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.data-table summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.data-table table {
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 2px 16px 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Converter ---- */
+
+.panel-title {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+}
+
+.amount-input {
+  width: 10rem;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.conversion-result p {
+  margin: 4px 0;
+}
+
+.conversion-main {
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+/* ---- AI insight ---- */
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-header .panel-title {
+  margin: 0;
+}
+
+.panel-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.ai-mark {
+  color: var(--accent);
+}
+
+/* Summary text: a readable line length, generous line height, a quiet accent bar on the left. */
+.insight {
+  max-width: 68ch;
+  margin: 4px 0 0;
+  padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--accent);
+  line-height: 1.65;
+}
+
+.insight p {
+  margin: 0 0 10px;
+}
+
+.insight-lead {
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+
+.insight-sentence {
+  color: var(--text-secondary);
+}
+
+.figure {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; /* never break "4.3925 PLN" across lines */
+}
+
+.insight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.badge-new {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.disclaimer {
+  margin: 12px 0 0;
+}
+
+/* ---- Flags ---- */
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flag {
+  display: inline-block;
+  width: 20px;
+  height: 15px;
+  flex: none;
+  vertical-align: -2px;
+  border-radius: 2px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--border); /* keeps white flags (JP, KR) visible on a white surface */
+}
+
+.flag-fallback {
+  background: var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 15px;
+  text-align: center;
+}
