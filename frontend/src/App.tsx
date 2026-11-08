@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { fetchCurrencies } from './api/client'
 import { CurrencySelector } from './components/CurrencySelector'
+import { Converter } from './components/Converter'
 import { Dashboard } from './components/Dashboard'
 import { DateRangePicker } from './components/DateRangePicker'
 import { useApi } from './hooks/useApi'
@@ -64,6 +65,8 @@ function App() {
           <Dashboard code={selectedCode} range={rangeError ? null : range} />
         </section>
       )}
+
+      {list.length > 0 && <Converter currencies={list} />}
     </main>
   )
 }

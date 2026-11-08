@@ -179,3 +179,33 @@ button:disabled {
 .num {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- Converter ---- */
+
+.panel-title {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+}
+
+.amount-input {
+  width: 10rem;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.conversion-result p {
+  margin: 4px 0;
+}
+
+.conversion-main {
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.small {
+  font-size: 0.85rem;
+}
