@@ -39,6 +39,18 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, "No endpoint " + request.getRequestURI(), request);
     }
 
+    /** No or wrong credentials, e.g. a missing X-Admin-Token on /api/admin/**. */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
+    /** Not allowed for anyone right now, e.g. the admin API is switched off (no ADMIN_TOKEN configured). */
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+        return build(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
