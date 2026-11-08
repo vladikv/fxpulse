@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(IngestionController.class)
+@WebMvcTest(controllers = IngestionController.class, properties = "app.admin.token=test-token")
 class IngestionControllerTest {
 
     // The MVC slice doesn't run @ConfigurationPropertiesScan, so bind the properties record explicitly.
@@ -34,6 +34,8 @@ class IngestionControllerTest {
     @MockitoBean
     private IngestionService ingestionService;
 
+    private static final String TOKEN = "test-token";
+
     private static final IngestionResult RESULT = new IngestionResult(
             LocalDate.parse("2026-11-05"), LocalDate.parse("2026-11-06"), 33, 66, 66, List.of());
 
@@ -41,7 +43,7 @@ class IngestionControllerTest {
     void ingestsRequestedNumberOfDays() throws Exception {
         when(ingestionService.ingest(30)).thenReturn(RESULT);
 
-        mockMvc.perform(post("/api/admin/ingest").param("days", "30"))
+        mockMvc.perform(post("/api/admin/ingest").param("days", "30").header("X-Admin-Token", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.from").value("2026-11-05"))
                 .andExpect(jsonPath("$.currencies").value(33))
@@ -53,7 +55,7 @@ class IngestionControllerTest {
     void usesConfiguredBackfillDaysWhenParameterIsMissing() throws Exception {
         when(ingestionService.ingest(365)).thenReturn(RESULT); // app.ingestion.backfill-days in application.yml
 
-        mockMvc.perform(post("/api/admin/ingest"))
+        mockMvc.perform(post("/api/admin/ingest").header("X-Admin-Token", TOKEN))
                 .andExpect(status().isOk());
 
         verify(ingestionService).ingest(365);
@@ -61,9 +63,9 @@ class IngestionControllerTest {
 
     @Test
     void rejectsDaysOutsideAllowedRange() throws Exception {
-        mockMvc.perform(post("/api/admin/ingest").param("days", "0"))
+        mockMvc.perform(post("/api/admin/ingest").param("days", "0").header("X-Admin-Token", TOKEN))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(post("/api/admin/ingest").param("days", "3651"))
+        mockMvc.perform(post("/api/admin/ingest").param("days", "3651").header("X-Admin-Token", TOKEN))
                 .andExpect(status().isBadRequest());
 
         verify(ingestionService, never()).ingest(anyInt());

@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard'
 import { DateRangePicker } from './components/DateRangePicker'
 import { InsightPanel } from './components/InsightPanel'
 import { useApi } from './hooks/useApi'
+import { useDelayedFlag } from './hooks/useDelayedFlag'
 import { daysInclusive } from './utils/dates'
 import { PRESETS, type Range } from './utils/ranges'
 import './App.css'
@@ -13,6 +14,8 @@ import './App.css'
 /** Same limit as the backend's app.rates.max-range-days; the backend still validates on its own. */
 const MAX_RANGE_DAYS = 366
 const DEFAULT_CODE = 'EUR'
+/** After this long without an answer, explain the free hosting's cold start. */
+const SLOW_START_MS = 5000
 
 /** Returns a message when the range can't be requested, or null when it is fine. */
 function validateRange({ from, to }: Range): string | null {
@@ -33,6 +36,7 @@ function validateRange({ from, to }: Range): string | null {
 function App() {
   // fetchCurrencies is a module function, so it is the same loader on every render: loads once.
   const currencies = useApi(fetchCurrencies)
+  const slowStart = useDelayedFlag(currencies.loading, SLOW_START_MS)
   const [code, setCode] = useState(DEFAULT_CODE)
   const [range, setRange] = useState<Range>(() => PRESETS[0].range())
 
@@ -50,7 +54,13 @@ function App() {
         <p className="subtitle">Official NBP exchange rates against PLN</p>
       </header>
 
-      {currencies.loading && <p className="muted">Connecting to the backend…</p>}
+      {currencies.loading && (
+        <p className="muted" role="status">
+          {slowStart
+            ? 'The free server is waking up after a quiet period. This can take up to a minute…'
+            : 'Connecting to the backend…'}
+        </p>
+      )}
       {currencies.error && (
         <p className="error" role="alert">
           {currencies.error.message}

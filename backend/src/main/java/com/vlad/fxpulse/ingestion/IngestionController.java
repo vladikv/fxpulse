@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Manual trigger for ingestion, e.g. the initial one-year backfill.
- * Not secured yet (portfolio project); in production this would sit behind authentication.
+ * Manual trigger for ingestion, e.g. the initial one-year backfill or the daily GitHub Actions job.
+ * Protected by {@link com.vlad.fxpulse.common.AdminTokenInterceptor}: callers must send the
+ * {@code X-Admin-Token} header, so this method itself contains no security code.
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -24,7 +25,7 @@ public class IngestionController {
     }
 
     /**
-     * POST /api/admin/ingest?days=365 - synchronous; a full year takes some seconds.
+     * POST /api/admin/ingest?days=365 (header X-Admin-Token) - synchronous; a full year takes some seconds.
      * Spring validates the @Min/@Max constraints itself and answers 400 when they are violated.
      */
     @PostMapping("/ingest")
