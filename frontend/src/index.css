@@ -6,6 +6,9 @@
   --muted: #5f6672;
   --border: #dde1e6;
   --accent: #2563eb;
+  --on-accent: #ffffff;
+  --chart-line: #2563eb;
+  --grid: #e6e9ed;
   --positive: #15803d;
   --negative: #b91c1c;
 
@@ -23,6 +26,9 @@
     --muted: #9aa2ad;
     --border: #2e333b;
     --accent: #60a5fa;
+    --on-accent: #0b1220;
+    --chart-line: #4b8ef7; /* #60a5fa is too light for a data line on the dark surface */
+    --grid: #2a2f37;
     --positive: #4ade80;
     --negative: #f87171;
   }
