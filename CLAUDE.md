@@ -83,6 +83,20 @@ Layering: controller -> service -> repository. Controllers never touch repositor
   `temperature`/`topP`/`topK` are silently ignored on 3.6 Flash and newer, so we don't send them.
 - Free-tier limits are per project (not per key); daily quotas reset at midnight Pacific time.
 
+## Cloud deploy facts (verified 2026-11-08)
+- Live: frontend `https://fxpulse-web.onrender.com`, backend `https://fxpulse-api.onrender.com`.
+- Render is configured by `render.yaml` (Blueprint). With `rootDir` set, `dockerfilePath`, `dockerContext`
+  and `staticPublishPath` are resolved **relative to rootDir** (the Blueprint spec page says "repo root",
+  the monorepo docs and real behaviour say rootDir: `./backend` became `backend/backend` and failed).
+- Render sets `PORT`; the backend listens on `${PORT:8098}`. Free instance: 512 MB, sleeps after 15 min idle.
+- `VITE_API_BASE_URL` is baked in at build time: changing it needs a rebuild of `fxpulse-web`.
+- Neon: Postgres 16, AWS Frankfurt, **direct** (non-pooled) connection with `?sslmode=require`;
+  Neon's `postgresql://user:pass@host/db` string must become `jdbc:postgresql://host/db?sslmode=require`.
+  Hikari pool `DB_POOL_SIZE=5` on Render.
+- Daily ingestion runs from GitHub Actions (`daily-ingest.yml`, secret `ADMIN_TOKEN`, variable
+  `FXPULSE_API_URL`). GitHub pauses scheduled workflows after 60 days without repo activity.
+- Secrets are typed by the user into Render / GitHub (website or their own terminal), never into this chat.
+
 ## Testing rules
 - Every service gets unit tests; every controller gets a `@WebMvcTest`.
 - Integration tests use Testcontainers PostgreSQL — no H2.

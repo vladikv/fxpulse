@@ -71,10 +71,11 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** green CI badge in README.
 
 ## Phase 7 — Cloud deploy (free)
-- [ ] Neon PostgreSQL (free, no expiry) — connection via env vars
-- [ ] Render: backend as Docker web service, frontend as static site
-- [ ] Env vars set in Render dashboard (DB, `GEMINI_API_KEY`, CORS origin)
-- [ ] Note in README: free instance sleeps after 15 min, first request takes ~1 min
+- [x] Neon PostgreSQL (free, no expiry) — connection via env vars
+- [x] Render: backend as Docker web service, frontend as static site
+- [x] Env vars set in Render dashboard (DB, `GEMINI_API_KEY`, CORS origin)
+- [x] Note in README: free instance sleeps after 15 min, first request takes ~1 min
+- [x] Extra: admin API protected by `X-Admin-Token`; daily ingestion via GitHub Actions; cold-start hint in the UI
 - **Done when:** public URL works end to end.
 
 ## Phase 8 — Polish & interview prep
