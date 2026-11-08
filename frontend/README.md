@@ -15,6 +15,7 @@ The backend must be running and allow the origin `http://localhost:5173` (its de
 - `npm run dev` – dev server with hot reload
 - `npm run build` – type-check (`tsc -b`) and production build into `dist/`
 - `npm run lint` – oxlint
+- `npm test` – Vitest unit tests (hooks and utils, jsdom)
 - `npm run preview` – serve the production build locally
 
 ## Structure

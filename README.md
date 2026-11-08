@@ -43,7 +43,7 @@ npm run dev                     # http://localhost:5173
 The frontend calls `VITE_API_BASE_URL` (default `http://localhost:8098`; see `frontend/.env.example`).
 The backend allows browser calls from the origins in `CORS_ALLOWED_ORIGINS` (default `http://localhost:5173`).
 
-Tests and checks: `cd backend; .\mvnw test` and `cd frontend; npm run lint; npm run build`
+Tests and checks: `cd backend; .\mvnw test` and `cd frontend; npm run lint; npm test; npm run build`
 
 ## Run everything with Docker
 Prerequisite: Docker only (no Java or Node needed).
