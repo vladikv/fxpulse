@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -59,8 +61,13 @@ class InsightServiceTest {
         return new RateStatsResponse("EUR", FROM, TO, count, null, null, null, null, null, null, null);
     }
 
+    /** A stored insight generated from 10 rates (the count most tests' stats have). */
     private static AiInsight stored(String content) {
-        return new AiInsight(EUR, FROM, TO, content, "stored-model");
+        return stored(content, 10);
+    }
+
+    private static AiInsight stored(String content, int rateCount) {
+        return new AiInsight(EUR, FROM, TO, content, "stored-model", rateCount);
     }
 
     private void givenStats(int count) {
@@ -137,7 +144,7 @@ class InsightServiceTest {
     void getInsight_cacheHitOnEmptyRange_returnsCachedRow() {
         // Given: rates may have been removed after the insight was stored
         givenStats(0);
-        givenLookup(Optional.of(stored("old text")));
+        givenLookup(Optional.of(stored("old text", 0)));
 
         // When
         InsightResponse response = service().getInsight("eur", FROM, TO);
@@ -253,6 +260,93 @@ class InsightServiceTest {
 
         // When / Then
         assertThatThrownBy(() -> service().getInsight("eur", FROM, TO)).isSameAs(original);
+    }
+
+    @Test
+    void getInsight_staleRowWithDifferentCount_refreshesSameEntityAndReturnsNotCached() {
+        // Given: row was written from 9 rates, now 10 exist
+        RateStatsResponse stats = stats(10);
+        when(rateService.getStats("eur", FROM, TO)).thenReturn(stats);
+        AiInsight stale = stored("old text", 9);
+        givenLookup(Optional.of(stale));
+        givenSlotAvailable();
+        when(promptBuilder.build(stats)).thenReturn("the prompt");
+        when(aiClient.generate("the prompt")).thenReturn(new AiCompletion("new text", "new-model"));
+        when(insightRepository.saveAndFlush(any(AiInsight.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // When
+        InsightResponse response = service().getInsight("eur", FROM, TO);
+
+        // Then
+        verify(aiClient, times(1)).generate("the prompt");
+        ArgumentCaptor<AiInsight> captor = ArgumentCaptor.forClass(AiInsight.class);
+        verify(insightRepository).saveAndFlush(captor.capture());
+        assertThat(captor.getValue()).isSameAs(stale);
+        assertThat(stale.getContent()).isEqualTo("new text");
+        assertThat(stale.getModel()).isEqualTo("new-model");
+        assertThat(stale.getRateCount()).isEqualTo(10);
+        assertThat(response.cached()).isFalse();
+        assertThat(response.content()).isEqualTo("new text");
+        assertThat(response.model()).isEqualTo("new-model");
+        verifyNoInteractions(currencyRepository);
+    }
+
+    @Test
+    void getInsight_staleRowWithNullCount_refreshesRow() {
+        // Given: a row from before migration V2 has no rate count
+        RateStatsResponse stats = stats(10);
+        when(rateService.getStats("eur", FROM, TO)).thenReturn(stats);
+        AiInsight legacy = stored("legacy text");
+        ReflectionTestUtils.setField(legacy, "rateCount", null);
+        givenLookup(Optional.of(legacy));
+        givenSlotAvailable();
+        when(promptBuilder.build(stats)).thenReturn("p");
+        when(aiClient.generate("p")).thenReturn(new AiCompletion("new text", "new-model"));
+        when(insightRepository.saveAndFlush(any(AiInsight.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // When
+        InsightResponse response = service().getInsight("eur", FROM, TO);
+
+        // Then
+        assertThat(response.cached()).isFalse();
+        assertThat(response.content()).isEqualTo("new text");
+        assertThat(legacy.getRateCount()).isEqualTo(10);
+        verify(insightRepository).saveAndFlush(legacy);
+    }
+
+    @Test
+    void getInsight_staleRowAndDailyLimitReached_throwsRateLimitedWithoutCallingAiOrSaving() {
+        // Given
+        givenStats(10);
+        AiInsight stale = stored("old text", 9);
+        givenLookup(Optional.of(stale));
+        when(dailyLimit.tryAcquire()).thenReturn(false);
+
+        // When / Then
+        assertThatThrownBy(() -> service().getInsight("eur", FROM, TO))
+                .isInstanceOf(AiRateLimitedException.class);
+        verifyNoInteractions(aiClient, promptBuilder);
+        verify(insightRepository, never()).saveAndFlush(any());
+        assertThat(stale.getContent()).isEqualTo("old text");
+        assertThat(stale.getRateCount()).isEqualTo(9);
+    }
+
+    @Test
+    void getInsight_staleRowAndAiUnavailable_propagatesAndSavesNothing() {
+        // Given
+        givenStats(10);
+        AiInsight stale = stored("old text", 9);
+        givenLookup(Optional.of(stale));
+        givenSlotAvailable();
+        when(promptBuilder.build(any())).thenReturn("p");
+        when(aiClient.generate("p")).thenThrow(new AiUnavailableException("AI service returned no answer"));
+
+        // When / Then
+        assertThatThrownBy(() -> service().getInsight("eur", FROM, TO))
+                .isInstanceOf(AiUnavailableException.class);
+        verify(insightRepository, never()).saveAndFlush(any());
+        assertThat(stale.getContent()).isEqualTo("old text");
+        assertThat(stale.getRateCount()).isEqualTo(9);
     }
 
     @Test

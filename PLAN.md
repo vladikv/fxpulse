@@ -81,8 +81,9 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 ## Phase 8 — Polish & interview prep
 - [x] README: what/why, architecture diagram, how to run, endpoints, decisions & trade-offs (no screenshots: the live demo link instead)
 - [x] Extra: frontend unit tests (Vitest) in CI; subagent definitions committed in `.claude/agents/`
-- [ ] `docs/ai-workflow.md`: how Claude Code was used (CLAUDE.md, plan mode, subagents, what I reviewed/changed myself)
-- [ ] Optional: `.claude/agents/code-reviewer.md` subagent, run it over the codebase, fix findings
+- [-] ~~`docs/ai-workflow.md`~~: skipped (docs stay local; explained in the interview instead)
+- [x] Optional: `.claude/agents/code-reviewer.md` subagent, run it over the codebase, fix findings
+  (fixed: red daily job on partial ingestion failure, stale AI insight cache via `rate_count`)
 - [ ] Ask Claude: "Ask me 15 interview questions about this codebase" — answer them out loud
 - [ ] Timed rehearsal: rebuild a mini version (one endpoint + one test) from scratch in 2 hours
 
