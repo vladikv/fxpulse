@@ -4,3 +4,7 @@ target/
 .idea/
 *.iml
 .vscode/
+# Defense in depth: never send git data or env files into a build, even if one appears here later.
+.git
+.env
+.env.*

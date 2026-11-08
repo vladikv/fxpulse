@@ -20,6 +20,7 @@ jobs:
   backend:
     name: Backend (build + tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung run fails fast instead of using up to 6 hours
     defaults:
       run:
         working-directory: backend
@@ -37,6 +38,7 @@ jobs:
   frontend:
     name: Frontend (lint + build)
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung run fails fast instead of using up to 6 hours
     defaults:
       run:
         working-directory: frontend
@@ -54,6 +56,7 @@ jobs:
   docker:
     name: Docker images (build only)
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # a hung run fails fast instead of using up to 6 hours
     steps:
       - uses: actions/checkout@v7
       # Catches a broken Dockerfile before it is deployed. Nothing is pushed anywhere.

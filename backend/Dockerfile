@@ -30,5 +30,8 @@ USER fxpulse
 EXPOSE 8098
 
 # MaxRAMPercentage: size the heap from the container's memory limit (e.g. 512 MB on a small cloud
-# instance) instead of the host's RAM. All settings (DB, Gemini key, CORS) come from env vars at runtime.
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+# instance) instead of the host's RAM. ExitOnOutOfMemoryError: on an OOM the JVM exits, so the platform
+# restarts a clean container instead of leaving a half-broken one running.
+# Exec form (JSON array): java is PID 1 and receives SIGTERM directly, so Spring Boot shuts down gracefully.
+# All settings (DB, Gemini key, CORS) come from env vars at runtime.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
