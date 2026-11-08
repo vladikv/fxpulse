@@ -104,7 +104,11 @@ export function Converter({ currencies }: Props) {
         </button>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       {result && !error && <ConversionResult result={result.conversion} requestedDate={result.date} />}
     </section>
   )

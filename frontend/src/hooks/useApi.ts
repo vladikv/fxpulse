@@ -29,6 +29,9 @@ interface Result<T> {
  * - `loading` is derived, not stored: we are loading while the last result belongs to an older loader.
  *   That avoids calling setState synchronously inside the effect (an extra render each time).
  * - The previous data stays available while the next request runs, so a chart doesn't flash empty.
+ * - If the same loader comes back after `null` (the range was invalid for a moment, then the same valid
+ *   range again), its last result still belongs to exactly these inputs: it is shown right away (not
+ *   marked as loading) while the effect quietly refreshes it.
  */
 export function useApi<T>(load: Loader<T> | null): ApiState<T> {
   const [result, setResult] = useState<Result<T> | null>(null)

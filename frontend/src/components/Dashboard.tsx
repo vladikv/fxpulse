@@ -11,44 +11,49 @@ interface Props {
   range: Range | null
 }
 
-/** Loads the series and the stats for one currency and range (two requests in parallel) and shows them. */
+/**
+ * Loads the series and the stats for one currency and range and shows them.
+ *
+ * Both requests run in parallel inside ONE loader (Promise.all), so they finish together: the chart and
+ * the stats cards always come from the same request and can never show two different currencies.
+ */
 export function Dashboard({ code, range }: Props) {
   const from = range?.from
   const to = range?.to
 
-  // A new loader whenever code/from/to change; useApi then aborts the old request and starts a new one.
-  const loadRates = useCallback(
-    (signal: AbortSignal) => fetchRates(code, { from, to }, signal),
-    [code, from, to],
-  )
-  const loadStats = useCallback(
-    (signal: AbortSignal) => fetchStats(code, { from, to }, signal),
-    [code, from, to],
-  )
-  const series = useApi(range ? loadRates : null)
-  const stats = useApi(range ? loadStats : null)
+  // A new loader whenever code/from/to change; useApi then aborts the old requests and starts new ones.
+  const loadDashboard = useCallback(async (signal: AbortSignal) => {
+    const [series, stats] = await Promise.all([
+      fetchRates(code, { from, to }, signal),
+      fetchStats(code, { from, to }, signal),
+    ])
+    return { series, stats }
+  }, [code, from, to])
+  const { data, error, loading } = useApi(range ? loadDashboard : null)
 
-  const error = series.error ?? stats.error
   if (error) {
-    return <p className="error">{error.message}</p>
+    return (
+      <p className="error" role="alert">
+        {error.message}
+      </p>
+    )
   }
-  if (!series.data || !stats.data) {
-    return series.loading || stats.loading ? <p className="muted">Loading rates…</p> : null
+  if (!data) {
+    return loading ? <p className="muted">Loading rates…</p> : null
   }
 
-  const loading = series.loading || stats.loading
   return (
     // While a new range loads, the previous chart stays visible but dimmed.
     <section className={loading ? 'dashboard loading' : 'dashboard'} aria-busy={loading}>
-      {series.data.rates.length === 0 ? (
+      {data.series.rates.length === 0 ? (
         <p className="muted">
-          No rates for {code} in this range (NBP publishes none on weekends and holidays). If the database is
-          empty, run the ingestion first: <code>POST /api/admin/ingest</code>.
+          No rates for {data.series.code} in this range (NBP publishes none on weekends and holidays). If the
+          database is empty, run the ingestion first: <code>POST /api/admin/ingest</code>.
         </p>
       ) : (
         <>
-          <StatsCards stats={stats.data} />
-          <RateChart code={series.data.code} rates={series.data.rates} />
+          <StatsCards stats={data.stats} />
+          <RateChart code={data.series.code} rates={data.series.rates} />
         </>
       )}
     </section>

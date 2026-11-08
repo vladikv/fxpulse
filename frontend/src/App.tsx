@@ -51,7 +51,11 @@ function App() {
       </header>
 
       {currencies.loading && <p className="muted">Connecting to the backend…</p>}
-      {currencies.error && <p className="error">{currencies.error.message}</p>}
+      {currencies.error && (
+        <p className="error" role="alert">
+          {currencies.error.message}
+        </p>
+      )}
       {currencies.data && list.length === 0 && (
         <p className="muted">
           The database has no currencies yet. Run the ingestion first: <code>POST /api/admin/ingest</code>.
@@ -65,7 +69,11 @@ function App() {
               <CurrencySelector currencies={list} value={selectedCode} onChange={setCode} />
               <DateRangePicker value={range} onChange={setRange} />
             </div>
-            {rangeError && <p className="error">{rangeError}</p>}
+            {rangeError && (
+              <p className="error" role="alert">
+                {rangeError}
+              </p>
+            )}
             <Dashboard code={selectedCode} range={validRange} />
           </section>
           {/* Uses the dashboard's currency and range, so the summary always describes what the chart shows. */}
