@@ -1,3 +1,6 @@
+# Local stack. `docker compose up -d db` starts only the database (for `.\mvnw spring-boot:run`);
+# `docker compose up --build` starts db + backend + frontend.
+# Compose reads the repo's .env for the ${...} values below; the defaults match .env.example.
 services:
   db:
     image: postgres:16
@@ -15,6 +18,35 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build: ./backend
+    container_name: fxpulse-backend
+    depends_on:
+      db:
+        condition: service_healthy   # start only when Postgres accepts connections (Flyway runs at startup)
+    environment:
+      # Inside the Compose network the DB is reached by its service name and container port,
+      # not localhost:25432 (that address only works from the host). So DB_URL from .env is not used here.
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-fxpulse}
+      DB_USERNAME: ${POSTGRES_USER:-fxpulse}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fxpulse}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}            # empty = AI insights return 503
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+    ports:
+      - "8098:8098"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the JS at build time; it is the URL the *browser* calls, hence localhost, not "backend".
+        VITE_API_BASE_URL: http://localhost:8098
+    container_name: fxpulse-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"   # host 3000, because 8080 is often taken by other local tools
 
 volumes:
   fxpulse-db-data:
