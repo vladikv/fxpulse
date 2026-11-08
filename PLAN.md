@@ -65,9 +65,9 @@ Target: MVP (Phases 0–5) in ~2–3 days of focused work. Phases 6–8 are poli
 - **Done when:** whole flow works in the browser locally.
 
 ## Phase 6 — Docker & CI
-- [ ] Multi-stage `Dockerfile` for backend, Dockerfile (or static build) for frontend
-- [ ] `docker compose up --build` runs db + backend + frontend
-- [ ] GitHub Actions: build + test backend (Testcontainers works on ubuntu runners), build frontend
+- [x] Multi-stage `Dockerfile` for backend (JDK build -> JRE run, non-root, `MaxRAMPercentage`), frontend (Node build -> nginx)
+- [x] `docker compose up --build` runs db + backend + frontend (frontend on host port 3000, because 8080 is often taken)
+- [x] GitHub Actions: build + test backend (Testcontainers works on ubuntu runners), lint + build frontend, `docker compose build`
 - **Done when:** green CI badge in README.
 
 ## Phase 7 — Cloud deploy (free)
