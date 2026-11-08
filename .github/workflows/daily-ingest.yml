@@ -34,8 +34,16 @@ jobs:
         # --retry covers a waking free instance: timeouts, refused connections and 408/429/5xx. It doesn't
         # retry 401/403 (a wrong token won't fix itself). Worst case 5 x 120 s + 4 x 20 s < 15 min timeout.
         # Overlapping attempts are safe: ingestion skips stored dates and the unique key guards the rest.
+        # A run can be HTTP 200 and still have failed for some currencies (the report lists them in
+        # failedCurrencies), so jq checks the report and turns the job red. jq is preinstalled on the runner.
         run: |
           [ -n "$API_URL" ] || { echo "Repository variable FXPULSE_API_URL is not set"; exit 1; }
-          curl -fsS --retry 4 --retry-connrefused --retry-delay 20 --max-time 120 \
+          report=$(curl -fsS --retry 4 --retry-connrefused --retry-delay 20 --max-time 120 \
             -X POST -H "X-Admin-Token: $ADMIN_TOKEN" \
-            "$API_URL/api/admin/ingest?days=$DAYS"
+            "$API_URL/api/admin/ingest?days=$DAYS")
+          echo "$report"
+          failed=$(echo "$report" | jq -r '.failedCurrencies | join(", ")')
+          if [ -n "$failed" ]; then
+            echo "::error::Ingestion failed for: $failed (the next run retries them)"
+            exit 1
+          fi

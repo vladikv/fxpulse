@@ -73,7 +73,8 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 - Key from env var `GEMINI_API_KEY` — never hardcode, never commit, never log it.
 - Model name is configurable (`app.ai.model`); default to a free-tier Flash / Flash-Lite model.
 - Free tier has rate limits: handle HTTP 429 gracefully (return a clear message, don't crash).
-- Cache insights in the DB per (currency, period_from, period_to); never call Gemini twice for the same key.
+- Cache insights in the DB per (currency, period_from, period_to) with the `rate_count` they were based on;
+  never call Gemini twice for the same key and data (regenerate only when the period has more rates now).
 - Send only aggregated numbers (stats), not huge raw datasets, to keep prompts small.
 - API (verified 2026-11-07): we use `POST {base}/v1beta/models/{model}:generateContent`. Google's docs now call
   `generateContent` **legacy** (still supported, no sunset date); the new default is the Interactions API

@@ -169,8 +169,9 @@ Every error has the same JSON shape (`ApiError`):
 - **Flyway over `ddl-auto`:** schema changes are versioned SQL, reviewed in git and repeatable on every
   database. Hibernate only validates the schema against the entities.
 - **AI behind an interface:** `InsightService` depends on `AiInsightClient`, so Gemini can be swapped for Ollama
-  or mocked in tests. Each `(currency, from, to)` is generated once and cached in the DB, and a global cap
-  (50 per day) protects the free-tier quota. Only aggregated statistics go into the prompt, never raw data.
+  or mocked in tests. Each `(currency, from, to)` is cached in the DB together with the number of rates it
+  was based on; it is regenerated only if more rates exist later (e.g. "to = today" asked before NBP
+  published). A global cap (50 per day) protects the free-tier quota. Only aggregated statistics go into the prompt, never raw data.
   The service is deliberately not `@Transactional`, so a multi-second AI call never holds a DB connection.
 - **Testcontainers over H2:** tests run against real PostgreSQL 16, the same SQL dialect, constraints and
   Flyway migrations as production. **WireMock** stubs NBP and Gemini, so tests never touch the internet.
@@ -187,7 +188,7 @@ Every error has the same JSON shape (`ApiError`):
 - A paid instance that doesn't sleep, a pooled DB connection, and a staging environment before `main`.
 
 ## Testing
-- **Backend: 193 tests** (`cd backend; .\mvnw test`), JUnit 5 + AssertJ:
+- **Backend: 206 tests** (`cd backend; .\mvnw test`), JUnit 5 + AssertJ:
   - unit tests with Mockito for services and calculations;
   - `@WebMvcTest` for every controller (validation, error JSON, CORS, admin token);
   - Testcontainers PostgreSQL for repositories, Flyway and full ingestion runs;

@@ -14,7 +14,9 @@ import java.util.Optional;
 
 /**
  * Returns an AI trend summary for a currency and period, calling the AI at most once per
- * (currency, from, to): the first answer is stored in {@code ai_insight} and reused afterwards.
+ * (currency, from, to) and data state: the answer is stored in {@code ai_insight} with the number of
+ * rates it was based on and reused while that number is unchanged. If more rates exist later (the period
+ * was requested before NBP published its last day, or a backfill filled gaps), the text is regenerated.
  *
  * <p>Deliberately NOT {@code @Transactional}: the AI call takes seconds, and a transaction around it
  * would hold a DB connection the whole time. Each repository call runs in its own short transaction.
@@ -49,7 +51,7 @@ public class InsightService {
 
         Optional<AiInsight> cached = insightRepository.findByCurrencyCodeAndPeriodFromAndPeriodTo(
                 stats.code(), stats.from(), stats.to());
-        if (cached.isPresent()) {
+        if (cached.isPresent() && cached.get().isUpToDate(stats.count())) {
             log.debug("Insight cache hit for {} {}..{}", stats.code(), stats.from(), stats.to());
             return InsightResponse.of(stats.code(), cached.get(), true);
         }
@@ -68,8 +70,17 @@ public class InsightService {
         log.info("Generated insight for {} {}..{} with {}", stats.code(), stats.from(), stats.to(),
                 completion.model());
 
+        if (cached.isPresent()) {
+            // Same key, more data than when the text was written: update the existing row.
+            AiInsight stale = cached.get();
+            log.info("Insight for {} {}..{} was based on {} rates, now {}: regenerated", stats.code(),
+                    stats.from(), stats.to(), stale.getRateCount(), stats.count());
+            stale.refresh(completion.text(), completion.model(), stats.count());
+            return InsightResponse.of(stats.code(), insightRepository.saveAndFlush(stale), false);
+        }
+
         AiInsight insight = new AiInsight(currencyRepository.getReferenceById(stats.code()),
-                stats.from(), stats.to(), completion.text(), completion.model());
+                stats.from(), stats.to(), completion.text(), completion.model(), stats.count());
         try {
             return InsightResponse.of(stats.code(), insightRepository.saveAndFlush(insight), false);
         } catch (DataIntegrityViolationException e) {
