@@ -3,6 +3,7 @@
   --bg: #f6f7f9;
   --surface: #ffffff;
   --text: #1c1f24;
+  --text-secondary: #3a404a;
   --muted: #5f6672;
   --border: #dde1e6;
   --accent: #2563eb;
@@ -23,6 +24,7 @@
     --bg: #121418;
     --surface: #1b1e24;
     --text: #e6e8eb;
+    --text-secondary: #c4c9d0;
     --muted: #9aa2ad;
     --border: #2e333b;
     --accent: #60a5fa;

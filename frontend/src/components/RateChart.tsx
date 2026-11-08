@@ -1,6 +1,7 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { RatePoint } from '../api/types'
 import { formatDate, formatRate, formatShortDate } from '../utils/format'
+import { CurrencyFlag } from './CurrencyFlag'
 
 interface Props {
   code: string
@@ -14,7 +15,9 @@ interface Props {
 export function RateChart({ code, rates }: Props) {
   return (
     <figure className="chart">
-      <figcaption className="chart-title">{code} / PLN – NBP mid rate</figcaption>
+      <figcaption className="chart-title">
+        <CurrencyFlag code={code} /> {code} / PLN – NBP mid rate
+      </figcaption>
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={rates} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--grid)" />

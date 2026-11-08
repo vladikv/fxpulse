@@ -3,6 +3,7 @@ import { convert } from '../api/client'
 import type { Conversion, Currency } from '../api/types'
 import { todayIso } from '../utils/dates'
 import { formatAmount, formatCrossRate, formatDate, formatInputAmount } from '../utils/format'
+import { CurrencyFlag } from './CurrencyFlag'
 
 interface Props {
   currencies: Currency[]
@@ -120,13 +121,16 @@ function CodeSelect({ label, value, codes, onChange }: CodeSelectProps) {
   return (
     <label className="field">
       <span className="field-label">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {codes.map((code) => (
-          <option key={code} value={code}>
-            {code}
-          </option>
-        ))}
-      </select>
+      <span className="field-control">
+        <CurrencyFlag code={value} />
+        <select value={value} onChange={(event) => onChange(event.target.value)}>
+          {codes.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
+        </select>
+      </span>
     </label>
   )
 }
@@ -151,7 +155,11 @@ function ConversionResult({ result, requestedDate }: ResultProps) {
   return (
     <div className="conversion-result" aria-live="polite">
       <p className="conversion-main">
-        {formatInputAmount(result.amount)} {result.from} = <strong>{formatAmount(result.result)} {result.to}</strong>
+        <CurrencyFlag code={result.from} /> {formatInputAmount(result.amount)} {result.from} ={' '}
+        <CurrencyFlag code={result.to} />{' '}
+        <strong>
+          {formatAmount(result.result)} {result.to}
+        </strong>
       </p>
       <p className="muted">
         1 {result.from} = {formatCrossRate(result.rate)} {result.to}

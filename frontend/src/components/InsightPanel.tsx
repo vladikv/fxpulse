@@ -3,6 +3,7 @@ import { ApiRequestError, fetchInsight } from '../api/client'
 import type { Insight } from '../api/types'
 import { formatDate } from '../utils/format'
 import type { Range } from '../utils/ranges'
+import { CurrencyFlag } from './CurrencyFlag'
 
 interface Props {
   code: string
@@ -59,7 +60,19 @@ export function InsightPanel({ code, range }: Props) {
   return (
     <section className="panel">
       <div className="panel-header">
-        <h2 className="panel-title">AI trend summary</h2>
+        <div>
+          <h2 className="panel-title">
+            <span className="ai-mark" aria-hidden="true">
+              ✦
+            </span>{' '}
+            AI trend summary
+          </h2>
+          {range && (
+            <p className="panel-subtitle">
+              <CurrencyFlag code={code} /> {code} / PLN · {formatDate(range.from)} – {formatDate(range.to)}
+            </p>
+          )}
+        </div>
         <button type="button" className="primary" onClick={generate} disabled={!range || loading}>
           {loading ? 'Generating…' : 'Generate AI insight'}
         </button>
@@ -68,7 +81,7 @@ export function InsightPanel({ code, range }: Props) {
       {!current && (
         <p className="muted">
           {range
-            ? `A short plain-English summary of ${code} from ${formatDate(range.from)} to ${formatDate(range.to)}.`
+            ? 'Click the button for a short plain-English summary of the period shown in the chart.'
             : 'Pick a valid date range first.'}
         </p>
       )}
@@ -83,17 +96,59 @@ export function InsightPanel({ code, range }: Props) {
   )
 }
 
+/**
+ * The model answers with one dense paragraph (3-4 sentences, ~7 numbers). To make it easy to scan:
+ * the first sentence (overall direction) becomes the lead, the others get their own lines, and the
+ * figures are highlighted. Everything is rendered as React text, never as HTML, so model output can't
+ * inject markup.
+ */
 function InsightText({ insight }: { insight: Insight }) {
+  const [lead, ...rest] = splitSentences(insight.content)
+
   return (
     <article className="insight" aria-live="polite">
-      <p className="insight-content">{insight.content}</p>
-      <p className="muted small">
-        <span className={insight.cached ? 'badge' : 'badge badge-new'}>{insight.cached ? 'Cached' : 'New'}</span>{' '}
-        {insight.model} · generated {dateTimeFormat.format(new Date(insight.createdAt))} · {formatDate(insight.from)}
-        {' – '}
-        {formatDate(insight.to)}
-      </p>
+      <p className="insight-lead">{highlightFigures(lead ?? '')}</p>
+      {rest.map((sentence, index) => (
+        <p key={index} className="insight-sentence">
+          {highlightFigures(sentence)}
+        </p>
+      ))}
+      <ul className="insight-meta" aria-label="About this summary">
+        <li>
+          <span className={insight.cached ? 'badge' : 'badge badge-new'}>{insight.cached ? 'Cached' : 'New'}</span>
+        </li>
+        <li>{insight.model}</li>
+        <li>generated {dateTimeFormat.format(new Date(insight.createdAt))}</li>
+      </ul>
     </article>
+  )
+}
+
+/**
+ * Splits on ". " followed by a capital letter, so decimals ("4.3925") and lower-case abbreviations
+ * stay intact. Line breaks from the model also start a new part.
+ */
+function splitSentences(text: string): string[] {
+  return text
+    .split(/\n+/)
+    .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z])/))
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+}
+
+/** Rates in PLN and percentages, e.g. "4.3925 PLN", "0.31 percent", "-1.2%". */
+const FIGURE = /([+-]?\d+(?:[.,]\d+)*\s?(?:PLN|percent|%))/
+
+/** split() with a capture group keeps the matches at the odd indexes; those are wrapped in <strong>. */
+function highlightFigures(sentence: string) {
+  return sentence.split(FIGURE).map((part, index) =>
+    index % 2 === 1 ? (
+      <strong key={index} className="figure">
+        {part}
+      </strong>
+    ) : (
+      part
+    ),
   )
 }
 

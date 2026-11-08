@@ -225,9 +225,58 @@ button.primary {
   margin: 0;
 }
 
-.insight-content {
-  white-space: pre-line; /* keep the model's line breaks */
-  margin: 0 0 8px;
+.panel-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.ai-mark {
+  color: var(--accent);
+}
+
+/* Summary text: a readable line length, generous line height, a quiet accent bar on the left. */
+.insight {
+  max-width: 68ch;
+  margin: 4px 0 0;
+  padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--accent);
+  line-height: 1.65;
+}
+
+.insight p {
+  margin: 0 0 10px;
+}
+
+.insight-lead {
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+
+.insight-sentence {
+  color: var(--text-secondary);
+}
+
+.figure {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; /* never break "4.3925 PLN" across lines */
+}
+
+.insight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .badge {
@@ -245,4 +294,31 @@ button.primary {
 
 .disclaimer {
   margin: 12px 0 0;
+}
+
+/* ---- Flags ---- */
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flag {
+  display: inline-block;
+  width: 20px;
+  height: 15px;
+  flex: none;
+  vertical-align: -2px;
+  border-radius: 2px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--border); /* keeps white flags (JP, KR) visible on a white surface */
+}
+
+.flag-fallback {
+  background: var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 15px;
+  text-align: center;
 }
