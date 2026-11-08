@@ -40,7 +40,9 @@ Layering: controller -> service -> repository. Controllers never touch repositor
 
 ## Commands (Windows / PowerShell, run from repo root unless noted)
 - Start DB: `docker compose up -d db`
-- Run backend: `cd backend; .\mvnw spring-boot:run`
+- Run backend: `cd backend; .\mvnw spring-boot:run` — also reads the repo's `.env` (GEMINI_API_KEY, DB_*) via
+  `--spring.config.import` in the spring-boot-maven-plugin config; tests, the jar and Docker never read `.env`.
+  `.env` is parsed as a `.properties` file: write values without quotes.
 - Backend tests: `cd backend; .\mvnw test`
 - Run frontend: `cd frontend; npm run dev`
 - Full stack in Docker: `docker compose up --build`
