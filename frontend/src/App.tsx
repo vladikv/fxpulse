@@ -4,6 +4,7 @@ import { CurrencySelector } from './components/CurrencySelector'
 import { Converter } from './components/Converter'
 import { Dashboard } from './components/Dashboard'
 import { DateRangePicker } from './components/DateRangePicker'
+import { InsightPanel } from './components/InsightPanel'
 import { useApi } from './hooks/useApi'
 import { daysInclusive } from './utils/dates'
 import { PRESETS, type Range } from './utils/ranges'
@@ -39,6 +40,8 @@ function App() {
   // Derived instead of fixed in an effect: if EUR is not in the database, fall back to the first currency.
   const selectedCode = list.some((c) => c.code === code) ? code : list[0]?.code
   const rangeError = validateRange(range)
+  // null while the range is invalid: the dashboard and the insight panel then request nothing.
+  const validRange = rangeError ? null : range
 
   return (
     <main className="app">
@@ -56,14 +59,18 @@ function App() {
       )}
 
       {selectedCode && (
-        <section className="panel">
-          <div className="controls">
-            <CurrencySelector currencies={list} value={selectedCode} onChange={setCode} />
-            <DateRangePicker value={range} onChange={setRange} />
-          </div>
-          {rangeError && <p className="error">{rangeError}</p>}
-          <Dashboard code={selectedCode} range={rangeError ? null : range} />
-        </section>
+        <>
+          <section className="panel">
+            <div className="controls">
+              <CurrencySelector currencies={list} value={selectedCode} onChange={setCode} />
+              <DateRangePicker value={range} onChange={setRange} />
+            </div>
+            {rangeError && <p className="error">{rangeError}</p>}
+            <Dashboard code={selectedCode} range={validRange} />
+          </section>
+          {/* Uses the dashboard's currency and range, so the summary always describes what the chart shows. */}
+          <InsightPanel code={selectedCode} range={validRange} />
+        </>
       )}
 
       {list.length > 0 && <Converter currencies={list} />}

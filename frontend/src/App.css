@@ -209,3 +209,40 @@ button.primary {
 .small {
   font-size: 0.85rem;
 }
+
+/* ---- AI insight ---- */
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-header .panel-title {
+  margin: 0;
+}
+
+.insight-content {
+  white-space: pre-line; /* keep the model's line breaks */
+  margin: 0 0 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.badge-new {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.disclaimer {
+  margin: 12px 0 0;
+}
