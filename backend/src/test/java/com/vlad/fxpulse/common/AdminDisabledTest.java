@@ -8,11 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +59,18 @@ class AdminDisabledTest {
         mockMvc.perform(post("/api/admin/ingest"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("Admin API is disabled (ADMIN_TOKEN is not set)"));
+
+        verifyNoInteractions(ingestionService);
+    }
+
+    @Test
+    void ingest_preflightWhileDisabled_returns403FromCorsNotDisabledMessage() throws Exception {
+        // When / Then
+        mockMvc.perform(options("/api/admin/ingest")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string(not(containsString("Admin API is disabled"))));
 
         verifyNoInteractions(ingestionService);
     }

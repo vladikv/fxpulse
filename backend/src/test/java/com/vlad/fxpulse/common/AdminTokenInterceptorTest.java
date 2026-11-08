@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,7 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,5 +103,27 @@ class AdminTokenInterceptorTest {
         // When / Then: the interceptor is registered only for /api/admin/**
         mockMvc.perform(get("/api/currencies"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void ingest_preflightFromAllowedOriginForPost_returns403FromCorsNotToken() throws Exception {
+        // When / Then: the interceptor lets the preflight through; CORS rejects POST (only GET is allowed)
+        mockMvc.perform(options("/api/admin/ingest")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+
+        verifyNoInteractions(ingestionService);
+    }
+
+    @Test
+    void ingest_optionsWithoutOrigin_stillRequiresToken() throws Exception {
+        // When / Then: no Origin means it is not a preflight, so the token check applies
+        mockMvc.perform(options("/api/admin/ingest"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Missing or invalid X-Admin-Token header"));
+
+        verifyNoInteractions(ingestionService);
     }
 }
